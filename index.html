@@ -1,0 +1,2287 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Manajemen Data HKTI DPC Kabupaten Asmat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'Inter', 'sans-serif']
+                    },
+                    colors: {
+                        hkti: {
+                            primary: '#15803d',
+                            dark: '#14532d',
+                            light: '#22c55e',
+                            pale: '#dcfce7',
+                            accent: '#dc2626',
+                            gold: '#eab308'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        /* Optimasi antarmuka layar sentuh tablet */
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, .font-display {
+            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+        }
+
+        .touch-target {
+            min-height: 46px;
+            touch-action: manipulation;
+        }
+
+        .nav-tab.active {
+            background-color: #15803d;
+            color: #ffffff;
+            box-shadow: 0 8px 18px -6px rgba(21, 128, 61, 0.45);
+        }
+
+        .tab-section {
+            display: none;
+        }
+
+        .tab-section.active {
+            display: block;
+            animation: smoothReveal 0.2s ease-out;
+        }
+
+        @keyframes smoothReveal {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 70;
+            background-color: rgba(15, 23, 42, 0.62);
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .thin-scroll::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+
+        .thin-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+
+    <!-- Komponen Notifikasi Toast (pengganti alert) -->
+    <div id="toast-banner" class="fixed bottom-5 right-5 max-w-md pointer-events-none transition-all duration-300 opacity-0 translate-y-3" style="z-index: 90;">
+        <div id="toast-card" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-2xl border text-sm font-semibold bg-slate-900 text-white border-slate-700">
+            <i id="toast-icon" class="ph-fill ph-check-circle text-emerald-400 text-xl shrink-0"></i>
+            <span id="toast-message">Siap.</span>
+        </div>
+    </div>
+
+    <!-- Header Utama Sistem Manajemen Data HKTI DPC Kabupaten Asmat -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-center shrink-0 p-1 relative overflow-hidden">
+                        <!-- Logo Vektor SVG HKTI (3 lingkaran hijau, atap & lengkungan merah, tulisan HKTI dengan aksen hijau pada huruf K) -->
+                        <svg id="hkti-vector-logo" viewBox="0 0 180 155" class="w-full h-full" role="img" aria-label="Logo HKTI DPC Kabupaten Asmat">
+                            <rect x="86" y="42" width="8" height="54" rx="2" fill="#0d8a3e" />
+                            <circle cx="90" cy="34" r="21" fill="none" stroke="#0d8a3e" stroke-width="7.5" />
+                            <circle cx="56" cy="64" r="21" fill="none" stroke="#0d8a3e" stroke-width="7.5" />
+                            <circle cx="124" cy="64" r="21" fill="none" stroke="#0d8a3e" stroke-width="7.5" />
+                            <polygon points="90,26 46,72 134,72" fill="none" stroke="#dc2626" stroke-width="7" stroke-linejoin="round" />
+                            <line x1="46" y1="72" x2="134" y2="72" stroke="#dc2626" stroke-width="7" stroke-linecap="round" />
+                            <path d="M60 72 A30 30 0 0 0 120 72" fill="none" stroke="#dc2626" stroke-width="7" stroke-linecap="round" />
+                            <g transform="translate(36, 112)">
+                                <rect x="0" y="0" width="7" height="34" fill="#dc2626" />
+                                <rect x="17" y="0" width="7" height="34" fill="#dc2626" />
+                                <rect x="0" y="14" width="24" height="6" fill="#dc2626" />
+                                <rect x="33" y="0" width="7" height="34" fill="#dc2626" />
+                                <polygon points="40,17 55,0 64,0 47,17" fill="#dc2626" />
+                                <polygon points="44,16 56,34 65,34 50,16" fill="#dc2626" />
+                                <line x1="51" y1="24" x2="64" y2="35" stroke="#0d8a3e" stroke-width="3.2" stroke-linecap="round" />
+                                <line x1="55" y1="19" x2="67" y2="30" stroke="#0d8a3e" stroke-width="2.8" stroke-linecap="round" />
+                                <rect x="72" y="0" width="26" height="7" fill="#dc2626" />
+                                <rect x="81.5" y="0" width="7" height="34" fill="#dc2626" />
+                                <rect x="105" y="0" width="7.5" height="34" fill="#dc2626" />
+                            </g>
+                        </svg>
+                        <!-- Opsi fallback gambar lokal ./logo-hkti.jpg atau upload logo di perangkat -->
+                        <img id="hkti-custom-logo" src="./logo-hkti.jpg" alt="Logo HKTI" class="hidden w-full h-full object-contain rounded-xl" onerror="handleCustomLogoError()" />
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-hkti-pale text-hkti-dark">DPC Asmat</span>
+                            <span class="text-[11px] font-semibold text-slate-500">Kode Wilayah 91.18 • Papua Selatan</span>
+                        </div>
+                        <h1 class="font-display text-base sm:text-xl font-extrabold text-slate-900 truncate">
+                            Sistem Manajemen Data HKTI DPC Kabupaten Asmat
+                        </h1>
+                        <p class="text-xs text-slate-500 truncate">
+                            Jl. Zegward, samping RSUD Agats • HP/WA: 082349960907
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Indikator Koneksi & Tombol Aksi Cepat Tablet -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <div id="header-conn-pill" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
+                        <span id="header-conn-dot" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                        <span id="header-conn-label">Mode Lokal (localStorage)</span>
+                    </div>
+                    <button type="button" id="header-sync-btn" onclick="testAndSyncSupabase()" class="touch-target px-3.5 py-2 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white text-xs sm:text-sm font-bold inline-flex items-center gap-1.5 shadow-xs transition cursor-pointer">
+                        <i id="header-sync-icon" class="ph-bold ph-arrows-clockwise text-base"></i>
+                        <span>Tes & Sinkronisasi Supabase</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigasi Tab Besar & Ramah Sentuh Tablet -->
+            <nav aria-label="Navigasi Sistem Manajemen Data HKTI DPC Asmat" class="flex items-center gap-2 overflow-x-auto thin-scroll pb-3 pt-1">
+                <button type="button" data-tab="ringkasan" onclick="switchTab('ringkasan')" class="nav-tab active touch-target shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 inline-flex items-center gap-2 transition cursor-pointer">
+                    <i class="ph-bold ph-squares-four text-lg"></i>
+                    <span>Ringkasan & 23 Distrik</span>
+                </button>
+                <button type="button" data-tab="kelompok" onclick="switchTab('kelompok')" class="nav-tab touch-target shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 inline-flex items-center gap-2 transition cursor-pointer">
+                    <i class="ph-bold ph-users-three text-lg"></i>
+                    <span>Kelompok & Komoditas</span>
+                </button>
+                <button type="button" data-tab="infrastruktur" onclick="switchTab('infrastruktur')" class="nav-tab touch-target shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 inline-flex items-center gap-2 transition cursor-pointer">
+                    <i class="ph-bold ph-boat text-lg"></i>
+                    <span>Kendala & Infrastruktur</span>
+                </button>
+                <button type="button" data-tab="program" onclick="switchTab('program')" class="nav-tab touch-target shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 inline-flex items-center gap-2 transition cursor-pointer">
+                    <i class="ph-bold ph-package text-lg"></i>
+                    <span>Program & Bantuan</span>
+                </button>
+                <button type="button" data-tab="berita" onclick="switchTab('berita')" class="nav-tab touch-target shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 inline-flex items-center gap-2 transition cursor-pointer">
+                    <i class="ph-bold ph-newspaper text-lg"></i>
+                    <span>Berita Kegiatan</span>
+                </button>
+                <button type="button" data-tab="pengurus" onclick="switchTab('pengurus')" class="nav-tab touch-target shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 inline-flex items-center gap-2 transition cursor-pointer">
+                    <i class="ph-bold ph-identification-badge text-lg"></i>
+                    <span>Pengurus & Pengelola</span>
+                </button>
+                <button type="button" data-tab="koneksi" onclick="switchTab('koneksi')" class="nav-tab touch-target shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 inline-flex items-center gap-2 transition cursor-pointer">
+                    <i class="ph-bold ph-database text-lg"></i>
+                    <span>Supabase, CSV & SQL</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6">
+
+        <!-- ============================================================= -->
+        <!-- TAB 1: RINGKASAN, KELEMBAGAAN & 23 DISTRIK ASMAT              -->
+        <!-- ============================================================= -->
+        <section id="panel-ringkasan" class="tab-section active space-y-6">
+            <!-- Hero Profil Kelembagaan DPC & Aturan Kewenangan KTA DPN HKTI -->
+            <div class="rounded-3xl bg-gradient-to-br from-hkti-dark via-hkti-primary to-emerald-700 text-white p-5 sm:p-7 shadow-md">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <div class="lg:col-span-7 space-y-3.5">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-xs font-bold">
+                            <i class="ph-fill ph-leaf text-hkti-gold"></i>
+                            <span>HIMPUNAN KERUKUNAN TANI INDONESIA • DPC KABUPATEN ASMAT</span>
+                        </div>
+                        <h2 class="font-display text-2xl sm:text-3xl font-extrabold leading-tight">
+                            Pendataan Lapangan Terpadu Petani, Peternak & Nelayan Asmat
+                        </h2>
+                        <p class="text-sm sm:text-base text-emerald-50/95 leading-relaxed">
+                            Dirancang untuk operasional lapangan di tablet: pendataan pengurus (DPC/PAC/DPRT), pengelola data, kelompok usaha tani/peternak/nelayan, komoditas, kendala infrastruktur (jalur air, BBM, cold storage, internet, modal), program/bantuan, dan berita kegiatan.
+                        </p>
+
+                        <!-- Aturan Kelembagaan Resmi Kewenangan KTA di DPN HKTI -->
+                        <div class="p-3.5 sm:p-4 rounded-2xl bg-amber-950/45 border border-amber-300/40 text-amber-50 text-xs sm:text-sm space-y-1">
+                            <div class="font-extrabold text-hkti-gold flex items-center gap-1.5">
+                                <i class="ph-fill ph-shield-check text-base"></i>
+                                <span>Ketentuan Kelembagaan Resmi: Kewenangan KTA di DPN HKTI</span>
+                            </div>
+                            <p class="leading-relaxed">
+                                Penerbitan Kartu Tanda Anggota (KTA) nasional merupakan <strong>kewenangan DPN HKTI</strong>. DPC Kabupaten Asmat tidak menerbitkan KTA mandiri di tingkat cabang, melainkan memfokuskan sistem ini pada pendataan kelembagaan, kelompok usaha, komoditas, infrastruktur, program, dan kegiatan lapangan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Kartu Sekretariat & Kontak Resmi DPC Asmat -->
+                    <div class="lg:col-span-5 bg-white text-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg space-y-3">
+                        <div class="text-xs font-extrabold uppercase tracking-wider text-hkti-primary">Sekretariat & Kontak Resmi</div>
+                        <div class="font-display font-bold text-base text-slate-900">HKTI DPC Kabupaten Asmat</div>
+
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start justify-between gap-2 text-xs sm:text-sm">
+                            <div class="flex items-start gap-2">
+                                <i class="ph-fill ph-map-pin text-hkti-primary text-lg shrink-0 mt-0.5"></i>
+                                <span><strong>Sekretariat:</strong> Jl. Zegward, samping RSUD Agats, Kabupaten Asmat, Papua Selatan</span>
+                            </div>
+                            <button type="button" onclick="copyText('Jl. Zegward, samping RSUD Agats, Kabupaten Asmat, Papua Selatan', 'Alamat sekretariat disalin.')" class="touch-target shrink-0 px-3 py-1.5 rounded-lg bg-hkti-pale hover:bg-hkti-primary text-hkti-dark hover:text-white text-xs font-bold inline-flex items-center gap-1 transition cursor-pointer">
+                                <i class="ph-bold ph-copy"></i><span>Salin</span>
+                            </button>
+                        </div>
+
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+                            <div class="flex items-center gap-2">
+                                <i class="ph-fill ph-whatsapp-logo text-emerald-600 text-lg shrink-0"></i>
+                                <span><strong>Kontak:</strong> <span class="font-extrabold text-slate-900">082349960907</span></span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="copyText('082349960907', 'Nomor kontak 082349960907 disalin.')" class="touch-target px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold inline-flex items-center gap-1 cursor-pointer">
+                                    <i class="ph-bold ph-copy"></i><span>Salin</span>
+                                </button>
+                                <a href="https://wa.me/6282349960907?text=Halo%20Sekretariat%20HKTI%20DPC%20Kabupaten%20Asmat" target="_blank" rel="noopener noreferrer" class="touch-target px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold inline-flex items-center gap-1">
+                                    <i class="ph-bold ph-whatsapp-logo"></i><span>WA</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <button type="button" onclick="switchTab('kelompok')" class="touch-target px-3 py-2.5 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-plus-circle"></i><span>Input Kelompok</span>
+                            </button>
+                            <button type="button" onclick="switchTab('infrastruktur')" class="touch-target px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-warning"></i><span>Catat Kendala</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4 Kartu Statistik Utama -->
+            <div id="kpi-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
+
+            <!-- Daftar Lengkap 23 Distrik Kabupaten Asmat beserta Kode Wilayah (91.18.01 - 91.18.23) -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Wilayah Administrasi (Kode 91.18)</span>
+                        <h3 class="font-display text-lg sm:text-xl font-bold text-slate-900">23 Distrik Kabupaten Asmat</h3>
+                    </div>
+                    <span class="text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 text-slate-700">
+                        Ketuk distrik untuk melihat/menyaring kelompok
+                    </span>
+                </div>
+                <div id="distrik-23-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5"></div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- TAB 2: KELOMPOK USAHA (TANI/PETERNAK/NELAYAN) & KOMODITAS     -->
+        <!-- ============================================================= -->
+        <section id="panel-kelompok" class="tab-section space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Form Input Kelompok Usaha & Komoditas -->
+                <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 h-fit">
+                    <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+                        <div class="w-11 h-11 rounded-xl bg-hkti-pale text-hkti-dark flex items-center justify-center">
+                            <i class="ph-bold ph-users-three text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Tambah Kelompok & Komoditas</h2>
+                            <p class="text-xs text-slate-500">Tani, Peternak, atau Nelayan di 23 Distrik</p>
+                        </div>
+                    </div>
+
+                    <form id="form-kelompok" onsubmit="handleSubmitKelompok(event)" class="space-y-3.5 text-sm">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Nama Kelompok *</label>
+                            <input type="text" name="nama_kelompok" required placeholder="Contoh: Kelompok Sagu Yaosakor" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Jenis Kelompok *</label>
+                                <select name="jenis_kelompok" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="Kelompok Tani">Kelompok Tani</option>
+                                    <option value="Kelompok Peternak">Kelompok Peternak</option>
+                                    <option value="Kelompok Nelayan">Kelompok Nelayan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Distrik (91.18) *</label>
+                                <select id="select-distrik-kelompok" name="id_distrik" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none"></select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Kampung *</label>
+                                <input type="text" name="kampung" required placeholder="Nama kampung" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Nama Ketua *</label>
+                                <input type="text" name="nama_ketua" required placeholder="Nama ketua kelompok" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2.5">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Anggota</label>
+                                <input type="number" name="jumlah_anggota" min="1" value="15" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Luas (Ha)</label>
+                                <input type="number" name="luas_area_hektar" step="0.1" min="0" value="2.0" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Status</label>
+                                <select name="status_pendampingan" class="touch-target w-full px-2.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="Terdata">Terdata</option>
+                                    <option value="Terverifikasi">Terverifikasi</option>
+                                    <option value="Dalam Pembinaan">Dalam Pembinaan</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 space-y-3">
+                            <div class="text-xs font-extrabold uppercase tracking-wider text-hkti-dark">Komoditas & Perkiraan Hasil</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-semibold text-slate-700 mb-1">Jenis Komoditas *</label>
+                                    <input type="text" name="jenis_komoditas" required placeholder="Sagu, Kepiting Bakau, Ayam..." class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block font-semibold text-slate-700 mb-1">Hasil</label>
+                                        <input type="number" name="perkiraan_hasil" step="0.5" min="0" value="100" class="touch-target w-full px-2.5 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-slate-700 mb-1">Satuan</label>
+                                        <input type="text" name="satuan" value="Kg / Siklus" class="touch-target w-full px-2.5 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="touch-target w-full py-3 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold inline-flex items-center justify-center gap-2 shadow-xs transition cursor-pointer">
+                            <i class="ph-bold ph-floppy-disk text-lg"></i>
+                            <span>Simpan Kelompok & Komoditas</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Daftar & Filter Kelompok Usaha -->
+                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Basis Data Lapangan</span>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Daftar Kelompok & Komoditas</h2>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <select id="filter-jenis-kelompok" onchange="renderKelompokList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                                <option value="SEMUA">Semua Jenis</option>
+                                <option value="Kelompok Tani">Kelompok Tani</option>
+                                <option value="Kelompok Peternak">Kelompok Peternak</option>
+                                <option value="Kelompok Nelayan">Kelompok Nelayan</option>
+                            </select>
+                            <select id="filter-distrik-kelompok" onchange="renderKelompokList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                                <option value="SEMUA">Semua 23 Distrik</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="kelompok-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- TAB 3: KENDALA INFRASTRUKTUR                                  -->
+        <!-- ============================================================= -->
+        <section id="panel-infrastruktur" class="tab-section space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 h-fit">
+                    <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+                        <div class="w-11 h-11 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
+                            <i class="ph-bold ph-boat text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Catat Kendala Infrastruktur</h2>
+                            <p class="text-xs text-slate-500">Jalur air, BBM, cold storage, internet & modal</p>
+                        </div>
+                    </div>
+
+                    <form id="form-infrastruktur" onsubmit="handleSubmitKendala(event)" class="space-y-3 text-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Distrik *</label>
+                                <select id="select-distrik-kendala" name="id_distrik" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Kampung *</label>
+                                <input type="text" name="kampung" required placeholder="Nama kampung" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Akses Jalur Air</label>
+                            <input type="text" name="akses_jalur_air" placeholder="Kondisi sungai/rawa, pasang surut, jarak tempuh..." class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Kebutuhan BBM Transportasi</label>
+                            <input type="text" name="kebutuhan_bbm_transport" placeholder="Ketersediaan & biaya BBM perahu/motor tempel..." class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Cold Storage / Penyimpanan</label>
+                                <input type="text" name="fasilitas_penyimpanan_cold_storage" placeholder="Coolbox, gudang, es balok..." class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Kondisi Internet</label>
+                                <select name="kondisi_jaringan_internet" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="Lemah / Terputus">Lemah / Terputus</option>
+                                    <option value="Terbatas di Titik Tertentu">Terbatas di Titik Tertentu</option>
+                                    <option value="Stabil">Stabil</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Kebutuhan Modal / Sarana</label>
+                                <input type="text" name="kebutuhan_modal_sarana" placeholder="Bibit, alat tangkap, mesin, modal kerja..." class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Prioritas Penanganan</label>
+                                <select name="prioritas_penanganan" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="Tinggi">Tinggi</option>
+                                    <option value="Sedang" selected>Sedang</option>
+                                    <option value="Rendah">Rendah</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Ringkasan Kendala *</label>
+                            <textarea name="ringkasan_kendala" rows="3" required placeholder="Ringkasan kendala lapangan di kampung/distrik..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none"></textarea>
+                        </div>
+
+                        <button type="submit" class="touch-target w-full py-3 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold inline-flex items-center justify-center gap-2 shadow-xs transition cursor-pointer">
+                            <i class="ph-bold ph-floppy-disk text-lg"></i>
+                            <span>Simpan Kendala Infrastruktur</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Pemetaan Lapangan</span>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Daftar Kendala Infrastruktur</h2>
+                        </div>
+                        <select id="filter-prioritas-kendala" onchange="renderKendalaList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                            <option value="SEMUA">Semua Prioritas</option>
+                            <option value="Tinggi">Tinggi</option>
+                            <option value="Sedang">Sedang</option>
+                            <option value="Rendah">Rendah</option>
+                        </select>
+                    </div>
+                    <div id="kendala-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- TAB 4: PROGRAM & BANTUAN                                      -->
+        <!-- ============================================================= -->
+        <section id="panel-program" class="tab-section space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 h-fit">
+                    <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+                        <div class="w-11 h-11 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center">
+                            <i class="ph-bold ph-package text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Catat Program & Bantuan</h2>
+                            <p class="text-xs text-slate-500">Penyaluran sarana, bibit, pelatihan & pendampingan</p>
+                        </div>
+                    </div>
+
+                    <form id="form-program" onsubmit="handleSubmitProgram(event)" class="space-y-3 text-sm">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Nama Program / Bantuan *</label>
+                            <input type="text" name="nama_program" required placeholder="Contoh: Bantuan Bibit & Alat Olah Sagu" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Jenis Bantuan *</label>
+                                <select name="jenis_bantuan" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="Bibit">Bibit</option>
+                                    <option value="Alsintan">Alsintan</option>
+                                    <option value="Sarana Ternak/Nelayan">Sarana Ternak/Nelayan</option>
+                                    <option value="Hidroponik/P2L">Hidroponik/P2L</option>
+                                    <option value="Pelatihan">Pelatihan</option>
+                                    <option value="Akses Pasar">Akses Pasar</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Distrik *</label>
+                                <select id="select-distrik-program" name="id_distrik" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none"></select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Kampung</label>
+                                <input type="text" name="kampung" placeholder="Nama kampung" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Jumlah / Unit *</label>
+                                <input type="text" name="jumlah_unit" required placeholder="Contoh: 20 Paket / 5 Unit" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Tanggal Penyaluran *</label>
+                                <input type="date" id="input-tanggal-program" name="tanggal_penyaluran" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Status Penyaluran</label>
+                                <select name="status_penyaluran" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="Tersalurkan">Tersalurkan</option>
+                                    <option value="Proses">Proses</option>
+                                    <option value="Direncanakan">Direncanakan</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Sumber & Keterangan</label>
+                            <textarea name="sumber_keterangan" rows="2" placeholder="Sumber program atau catatan penyaluran..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none"></textarea>
+                        </div>
+
+                        <button type="submit" class="touch-target w-full py-3 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold inline-flex items-center justify-center gap-2 shadow-xs transition cursor-pointer">
+                            <i class="ph-bold ph-floppy-disk text-lg"></i>
+                            <span>Simpan Program & Bantuan</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-sky-700">Realisasi Penyaluran</span>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Daftar Program & Bantuan</h2>
+                        </div>
+                        <select id="filter-status-program" onchange="renderProgramList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                            <option value="SEMUA">Semua Status</option>
+                            <option value="Tersalurkan">Tersalurkan</option>
+                            <option value="Proses">Proses</option>
+                            <option value="Direncanakan">Direncanakan</option>
+                        </select>
+                    </div>
+                    <div id="program-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- TAB 5: BERITA KEGIATAN                                        -->
+        <!-- ============================================================= -->
+        <section id="panel-berita" class="tab-section space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Laporan & Dokumentasi</span>
+                        <h2 class="font-display text-lg sm:text-xl font-bold text-slate-900">Berita Kegiatan HKTI DPC Kabupaten Asmat</h2>
+                    </div>
+                    <button type="button" onclick="openBeritaModal()" class="touch-target px-4 py-2.5 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer">
+                        <i class="ph-bold ph-plus-circle text-lg"></i>
+                        <span>Tambah Berita Kegiatan</span>
+                    </button>
+                </div>
+
+                <div id="berita-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- TAB 6: PENGURUS (DPC/PAC/DPRT) & PENGELOLA DATA               -->
+        <!-- ============================================================= -->
+        <section id="panel-pengurus" class="tab-section space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 h-fit">
+                    <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+                        <div class="w-11 h-11 rounded-xl bg-hkti-pale text-hkti-dark flex items-center justify-center">
+                            <i class="ph-bold ph-identification-badge text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Tambah Pengurus</h2>
+                            <p class="text-xs text-slate-500">Kepengurusan DPC, PAC, atau DPRT</p>
+                        </div>
+                    </div>
+
+                    <form id="form-pengurus" onsubmit="handleSubmitPengurus(event)" class="space-y-3 text-sm">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Tingkatan *</label>
+                                <select name="tingkatan" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="DPC">DPC</option>
+                                    <option value="PAC">PAC</option>
+                                    <option value="DPRT">DPRT</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Jenis Kelamin *</label>
+                                <select name="jenis_kelamin" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="L">Laki-laki (L)</option>
+                                    <option value="P">Perempuan (P)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap *</label>
+                            <input type="text" name="nama_lengkap" required placeholder="Nama lengkap pengurus" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">No. HP / WA *</label>
+                                <input type="text" name="no_hp_wa" required placeholder="08xxxxxxxxxx" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Jabatan *</label>
+                                <input type="text" name="jabatan" required placeholder="Ketua / Sekretaris / Bendahara..." class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Distrik</label>
+                                <select id="select-distrik-pengurus" name="id_distrik" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Kampung</label>
+                                <input type="text" name="kampung" placeholder="Nama kampung (DPRT)" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Bidang</label>
+                                <input type="text" name="bidang" placeholder="Pertanian, Perikanan, dll." class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Hak Akses</label>
+                                <select name="hak_akses" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="Operator Lapangan">Operator Lapangan</option>
+                                    <option value="Admin Penuh">Admin Penuh</option>
+                                    <option value="Peninjau">Peninjau</option>
+                                    <option value="Tanpa Akses Sistem">Tanpa Akses Sistem</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <label class="flex items-center gap-2.5 pt-1 cursor-pointer">
+                            <input type="checkbox" name="tetapkan_pengelola" checked class="w-4 h-4 accent-hkti-primary rounded" />
+                            <span class="text-xs sm:text-sm font-medium text-slate-700">Tetapkan sebagai Pengelola Data</span>
+                        </label>
+
+                        <button type="submit" class="touch-target w-full py-3 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold inline-flex items-center justify-center gap-2 shadow-xs transition cursor-pointer">
+                            <i class="ph-bold ph-floppy-disk text-lg"></i>
+                            <span>Simpan Pengurus</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="lg:col-span-7 space-y-5">
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Struktur Organisasi</span>
+                                <h2 class="font-display text-lg font-bold text-slate-900">Daftar Pengurus DPC, PAC & DPRT</h2>
+                            </div>
+                            <select id="filter-tingkatan-pengurus" onchange="renderPengurusList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                                <option value="SEMUA">Semua Tingkatan</option>
+                                <option value="DPC">DPC</option>
+                                <option value="PAC">PAC</option>
+                                <option value="DPRT">DPRT</option>
+                            </select>
+                        </div>
+                        <div id="pengurus-list" class="space-y-3"></div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-3">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Pengelola Data Terdaftar</span>
+                            <h3 class="font-display text-base sm:text-lg font-bold text-slate-900">Petugas Pengelola Data</h3>
+                        </div>
+                        <div id="pengelola-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- TAB 7: SUPABASE REST API, EKSPOR/IMPOR CSV & SKRIP SQL        -->
+        <!-- ============================================================= -->
+        <section id="panel-koneksi" class="tab-section space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Konfigurasi Supabase REST API & CSV -->
+                <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4 h-fit">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Supabase REST API (/rest/v1/)</span>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Koneksi Database & Cadangan Lokal</h2>
+                        </div>
+                        <span id="tab-conn-badge" class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">
+                            Mode Lokal
+                        </span>
+                    </div>
+
+                    <div id="tab-conn-info" class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
+                        Menggunakan cadangan <strong class="text-slate-800">localStorage</strong> bila jaringan tidak stabil atau belum tersinkronisasi.
+                    </div>
+
+                    <form id="form-supabase" onsubmit="handleSaveSupabaseSettings(event)" class="space-y-3 text-sm">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Project URL *</label>
+                            <input type="url" id="supabase-url-input" required placeholder="https://yxuasktivchtbbugdpos.supabase.co" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            <p class="text-[11px] text-slate-500 mt-1">Jika diakhiri <code class="font-mono">/rest/v1</code>, sistem akan membersihkannya otomatis.</p>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Publishable / Anon Key *</label>
+                            <input type="text" id="supabase-key-input" required placeholder="Masukkan Publishable atau Anon Key" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                            <button type="submit" class="touch-target py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-floppy-disk text-base"></i>
+                                <span>Simpan Pengaturan</span>
+                            </button>
+                            <button type="button" onclick="testAndSyncSupabase()" class="touch-target py-2.5 px-3 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-arrows-clockwise text-base"></i>
+                                <span>Tes & Sinkronisasi Supabase</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Ekspor & Impor CSV Kelompok -->
+                    <div class="pt-3 border-t border-slate-200 space-y-2.5">
+                        <div class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Ekspor & Impor CSV Kelompok</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <button type="button" onclick="exportKelompokCsv()" class="touch-target py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-download-simple text-base"></i>
+                                <span>Ekspor CSV Kelompok</span>
+                            </button>
+                            <label class="touch-target py-2.5 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                                <i class="ph-bold ph-upload-simple text-base"></i>
+                                <span>Impor CSV Kelompok</span>
+                                <input type="file" id="csv-import-input" accept=".csv,text/csv" onchange="importKelompokCsv(event)" class="hidden" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="resetToDefaultData()" class="touch-target w-full py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                        <span>Pulihkan Data Bawaan Lokal</span>
+                    </button>
+
+                    <!-- Opsi Unggah Logo Lokal Opsional -->
+                    <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <label class="touch-target px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold inline-flex items-center gap-1.5 cursor-pointer">
+                            <i class="ph-bold ph-image text-base"></i>
+                            <span>Unggah Logo Lokal (Opsional)</span>
+                            <input type="file" id="logo-upload-input" accept="image/*" onchange="handleLogoUpload(event)" class="hidden" />
+                        </label>
+                        <button type="button" onclick="resetLogoToVector()" class="touch-target px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 border border-slate-300 font-bold cursor-pointer">
+                            Pakai Vektor SVG
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Skrip SQL PostgreSQL / Supabase -->
+                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Skema Basis Data</span>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Skrip SQL Tabel & 23 Distrik Asmat</h2>
+                        </div>
+                        <button type="button" onclick="copySqlScript()" class="touch-target px-4 py-2 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
+                            <i class="ph-bold ph-copy text-base"></i>
+                            <span>Salin Skrip SQL</span>
+                        </button>
+                    </div>
+                    <pre id="sql-script-view" class="p-4 rounded-2xl bg-slate-900 text-emerald-300 text-xs overflow-x-auto thin-scroll max-h-[28rem] leading-relaxed"></pre>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Resmi HKTI DPC Kabupaten Asmat -->
+    <footer class="bg-slate-900 text-slate-200 border-t border-slate-800 mt-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs sm:text-sm">
+            <div class="space-y-1">
+                <div class="font-display font-extrabold text-white text-base">HKTI DPC Kabupaten Asmat</div>
+                <div class="text-slate-400">Sekretariat: Jl. Zegward, samping RSUD Agats, Kabupaten Asmat, Papua Selatan • Kontak: 082349960907</div>
+                <div class="text-amber-300/90 text-xs">Penerbitan KTA adalah kewenangan DPN HKTI.</div>
+            </div>
+            <button type="button" onclick="copyText('Jl. Zegward, samping RSUD Agats, Kabupaten Asmat, Papua Selatan | Kontak: 082349960907', 'Info sekretariat & kontak disalin.')" class="touch-target px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
+                <i class="ph-bold ph-copy"></i>
+                <span>Salin Info Sekretariat</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Modal Tambah Berita Kegiatan -->
+    <div id="modal-berita" class="modal-overlay" onclick="handleModalBackdrop(event, 'modal-berita')">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto thin-scroll">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-display text-lg font-bold text-slate-900">Tambah Berita Kegiatan</h3>
+                <button type="button" onclick="closeModal('modal-berita')" class="touch-target w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center cursor-pointer">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+            <form id="form-berita" onsubmit="handleSubmitBerita(event)" class="space-y-3 text-sm">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Judul Kegiatan *</label>
+                    <input type="text" name="judul" required placeholder="Judul kegiatan di wilayah Asmat" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Kategori</label>
+                        <select name="kategori" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                            <option value="Kegiatan Lapangan">Kegiatan Lapangan</option>
+                            <option value="Kemitraan & Program">Kemitraan & Program</option>
+                            <option value="Pengumuman/Agenda">Pengumuman/Agenda</option>
+                            <option value="Potensi Wilayah">Potensi Wilayah</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Distrik</label>
+                        <select id="select-distrik-berita" name="id_distrik" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Tanggal Kegiatan</label>
+                        <input type="date" id="input-tanggal-berita" name="tanggal_kegiatan" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Status Publikasi</label>
+                        <select name="status_publikasi" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                            <option value="Terbit">Terbit</option>
+                            <option value="Draf">Draf</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Ringkasan *</label>
+                    <textarea name="ringkasan" rows="2" required placeholder="Ringkasan singkat berita..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Isi Berita *</label>
+                    <textarea name="isi_berita" rows="4" required placeholder="Uraian lengkap berita kegiatan..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-berita')" class="touch-target px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer">Batal</button>
+                    <button type="submit" class="touch-target px-5 py-2.5 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold cursor-pointer">Simpan Berita</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================================
+        // 1. MASTER 23 DISTRIK KABUPATEN ASMAT (91.18.01 - 91.18.23) & SQL
+        // =====================================================================
+        const DEFAULT_PROJECT_URL = 'https://yxuasktivchtbbugdpos.supabase.co';
+        const STORAGE_KEY = 'hkti_dpc_asmat_tablet_v2';
+
+        const DISTRIK_23 = [
+            { id: 1, kode: '91.18.01', nama: 'Agats' },
+            { id: 2, kode: '91.18.02', nama: 'Atsj' },
+            { id: 3, kode: '91.18.03', nama: 'Sawa Erma' },
+            { id: 4, kode: '91.18.04', nama: 'Akat' },
+            { id: 5, kode: '91.18.05', nama: 'Fayit' },
+            { id: 6, kode: '91.18.06', nama: 'Pantai Kasuari' },
+            { id: 7, kode: '91.18.07', nama: 'Suator' },
+            { id: 8, kode: '91.18.08', nama: 'Suru-Suru' },
+            { id: 9, kode: '91.18.09', nama: 'Kolf Braza' },
+            { id: 10, kode: '91.18.10', nama: 'Unir Sirau' },
+            { id: 11, kode: '91.18.11', nama: 'Joerat' },
+            { id: 12, kode: '91.18.12', nama: 'Pulau Tiga' },
+            { id: 13, kode: '91.18.13', nama: 'Jetsy' },
+            { id: 14, kode: '91.18.14', nama: 'Der Koumur' },
+            { id: 15, kode: '91.18.15', nama: 'Kopay' },
+            { id: 16, kode: '91.18.16', nama: 'Safan' },
+            { id: 17, kode: '91.18.17', nama: 'Sirets' },
+            { id: 18, kode: '91.18.18', nama: 'Ayip' },
+            { id: 19, kode: '91.18.19', nama: 'Betcbamu' },
+            { id: 20, kode: '91.18.20', nama: 'Joutu' },
+            { id: 21, kode: '91.18.21', nama: 'Aswi' },
+            { id: 22, kode: '91.18.22', nama: 'Awyu' },
+            { id: 23, kode: '91.18.23', nama: 'Koroway Buluanop' }
+        ];
+
+        const SQL_SCHEMA = `-- Skrip SQL Sistem Manajemen Data HKTI DPC Kabupaten Asmat
+CREATE TABLE IF NOT EXISTS distrik (
+    id_distrik SERIAL PRIMARY KEY,
+    kode_wilayah VARCHAR(15) UNIQUE NOT NULL,
+    nama_distrik VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS pengurus (
+    id_pengurus SERIAL PRIMARY KEY,
+    tingkatan VARCHAR(10) NOT NULL CHECK (tingkatan IN ('DPC', 'PAC', 'DPRT')),
+    nama_lengkap VARCHAR(150) NOT NULL,
+    jenis_kelamin VARCHAR(5) NOT NULL CHECK (jenis_kelamin IN ('L', 'P')),
+    no_hp_wa VARCHAR(25) NOT NULL,
+    email VARCHAR(120),
+    id_distrik INT REFERENCES distrik(id_distrik),
+    kampung VARCHAR(100),
+    jabatan VARCHAR(100) NOT NULL,
+    bidang VARCHAR(100),
+    periode_sk VARCHAR(60),
+    status_kepengurusan VARCHAR(30) NOT NULL DEFAULT 'Aktif',
+    hak_akses VARCHAR(40) NOT NULL DEFAULT 'Operator Lapangan',
+    status_akun VARCHAR(20) NOT NULL DEFAULT 'Aktif',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS pengelola_data (
+    id_pengelola SERIAL PRIMARY KEY,
+    id_pengurus INT UNIQUE NOT NULL REFERENCES pengurus(id_pengurus) ON DELETE CASCADE,
+    level_pengelolaan VARCHAR(40) NOT NULL DEFAULT 'Operator Lapangan',
+    cakupan_wilayah VARCHAR(120) DEFAULT 'Kabupaten Asmat',
+    status_pengelola VARCHAR(20) NOT NULL DEFAULT 'Aktif',
+    catatan_tugas TEXT,
+    ditetapkan_pada DATE DEFAULT CURRENT_DATE
+);
+
+CREATE TABLE IF NOT EXISTS kelompok_usaha (
+    id_kelompok SERIAL PRIMARY KEY,
+    nama_kelompok VARCHAR(150) NOT NULL,
+    jenis_kelompok VARCHAR(30) NOT NULL CHECK (jenis_kelompok IN ('Kelompok Tani', 'Kelompok Peternak', 'Kelompok Nelayan')),
+    id_distrik INT NOT NULL REFERENCES distrik(id_distrik),
+    kampung VARCHAR(100) NOT NULL,
+    nama_ketua VARCHAR(150) NOT NULL,
+    no_hp_ketua VARCHAR(25),
+    jumlah_anggota INT DEFAULT 1,
+    luas_area_hektar DECIMAL(8, 2) DEFAULT 0.00,
+    status_pendampingan VARCHAR(30) NOT NULL DEFAULT 'Terdata',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS kelompok_komoditas (
+    id_komoditas_kelompok SERIAL PRIMARY KEY,
+    id_kelompok INT NOT NULL REFERENCES kelompok_usaha(id_kelompok) ON DELETE CASCADE,
+    jenis_komoditas VARCHAR(100) NOT NULL,
+    perkiraan_hasil DECIMAL(10, 2),
+    satuan VARCHAR(30) DEFAULT 'Kg',
+    periode_panen VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS kendala_infrastruktur (
+    id_kendala SERIAL PRIMARY KEY,
+    id_distrik INT NOT NULL REFERENCES distrik(id_distrik),
+    kampung VARCHAR(100) NOT NULL,
+    akses_jalur_air TEXT,
+    kebutuhan_bbm_transport TEXT,
+    fasilitas_penyimpanan_cold_storage TEXT,
+    kondisi_jaringan_internet VARCHAR(50),
+    kebutuhan_modal_sarana TEXT,
+    prioritas_penanganan VARCHAR(20) NOT NULL DEFAULT 'Sedang',
+    ringkasan_kendala TEXT NOT NULL,
+    tanggal_catatan DATE DEFAULT CURRENT_DATE
+);
+
+CREATE TABLE IF NOT EXISTS program_bantuan (
+    id_program SERIAL PRIMARY KEY,
+    nama_program VARCHAR(150) NOT NULL,
+    jenis_bantuan VARCHAR(60) NOT NULL,
+    id_distrik INT NOT NULL REFERENCES distrik(id_distrik),
+    kampung VARCHAR(100),
+    jumlah_unit VARCHAR(60) NOT NULL,
+    tanggal_penyaluran DATE NOT NULL,
+    status_penyaluran VARCHAR(30) NOT NULL DEFAULT 'Tersalurkan',
+    sumber_keterangan TEXT
+);
+
+CREATE TABLE IF NOT EXISTS berita_kegiatan (
+    id_berita SERIAL PRIMARY KEY,
+    judul VARCHAR(220) NOT NULL,
+    kategori VARCHAR(60) NOT NULL DEFAULT 'Kegiatan Lapangan',
+    id_distrik INT REFERENCES distrik(id_distrik),
+    kampung_lokasi VARCHAR(100),
+    tanggal_kegiatan DATE DEFAULT CURRENT_DATE,
+    ringkasan TEXT NOT NULL,
+    isi_berita TEXT NOT NULL,
+    status_publikasi VARCHAR(20) NOT NULL DEFAULT 'Terbit',
+    dibuat_pada TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO distrik (kode_wilayah, nama_distrik) VALUES
+('91.18.01', 'Agats'),
+('91.18.02', 'Atsj'),
+('91.18.03', 'Sawa Erma'),
+('91.18.04', 'Akat'),
+('91.18.05', 'Fayit'),
+('91.18.06', 'Pantai Kasuari'),
+('91.18.07', 'Suator'),
+('91.18.08', 'Suru-Suru'),
+('91.18.09', 'Kolf Braza'),
+('91.18.10', 'Unir Sirau'),
+('91.18.11', 'Joerat'),
+('91.18.12', 'Pulau Tiga'),
+('91.18.13', 'Jetsy'),
+('91.18.14', 'Der Koumur'),
+('91.18.15', 'Kopay'),
+('91.18.16', 'Safan'),
+('91.18.17', 'Sirets'),
+('91.18.18', 'Ayip'),
+('91.18.19', 'Betcbamu'),
+('91.18.20', 'Joutu'),
+('91.18.21', 'Aswi'),
+('91.18.22', 'Awyu'),
+('91.18.23', 'Koroway Buluanop')
+ON CONFLICT (kode_wilayah) DO NOTHING;`;
+
+        // =====================================================================
+        // 2. STATE APLIKASI & FALLBACK LOCALSTORAGE AMAN
+        // =====================================================================
+        function createDefaultState() {
+            return {
+                supabase: {
+                    projectUrl: DEFAULT_PROJECT_URL,
+                    apiKey: ''
+                },
+                customLogoDataUrl: '',
+                pengurus: [
+                    {
+                        id_pengurus: 1,
+                        tingkatan: 'DPC',
+                        nama_lengkap: 'Koordinator Sekretariat HKTI Asmat',
+                        jenis_kelamin: 'L',
+                        no_hp_wa: '082349960907',
+                        id_distrik: 1,
+                        kampung: 'Agats',
+                        jabatan: 'Sekretariat DPC',
+                        bidang: 'Pendataan & Organisasi',
+                        hak_akses: 'Admin Penuh',
+                        sebagai_pengelola: true
+                    }
+                ],
+                kelompok: [
+                    {
+                        id_kelompok: 1,
+                        nama_kelompok: 'Kelompok Sagu Yaosakor',
+                        jenis_kelompok: 'Kelompok Tani',
+                        id_distrik: 1,
+                        kampung: 'Yaosakor',
+                        nama_ketua: 'Yosef B.',
+                        jumlah_anggota: 20,
+                        luas_area_hektar: 3.5,
+                        status_pendampingan: 'Terverifikasi',
+                        jenis_komoditas: 'Sagu',
+                        perkiraan_hasil: 600,
+                        satuan: 'Kg / Bulan'
+                    },
+                    {
+                        id_kelompok: 2,
+                        nama_kelompok: 'Kelompok Nelayan Atsj',
+                        jenis_kelompok: 'Kelompok Nelayan',
+                        id_distrik: 2,
+                        kampung: 'Atsj',
+                        nama_ketua: 'Markus K.',
+                        jumlah_anggota: 14,
+                        luas_area_hektar: 2.0,
+                        status_pendampingan: 'Dalam Pembinaan',
+                        jenis_komoditas: 'Ikan Rawa & Kepiting',
+                        perkiraan_hasil: 350,
+                        satuan: 'Kg / Siklus'
+                    }
+                ],
+                kendala: [
+                    {
+                        id_kendala: 1,
+                        id_distrik: 2,
+                        kampung: 'Atsj',
+                        akses_jalur_air: 'Sungai & muara mengikuti pasang surut',
+                        kebutuhan_bbm_transport: 'BBM perahu ketinting untuk angkut hasil ke Agats',
+                        fasilitas_penyimpanan_cold_storage: 'Belum ada cold storage kampung',
+                        kondisi_jaringan_internet: 'Terbatas di Titik Tertentu',
+                        kebutuhan_modal_sarana: 'Mesin parut sagu & coolbox',
+                        prioritas_penanganan: 'Tinggi',
+                        ringkasan_kendala: 'Jarak tempuh jalur air, biaya BBM, dan minimnya fasilitas penyimpanan pascapanen.',
+                        tanggal_catatan: '2026-11-20'
+                    }
+                ],
+                program: [
+                    {
+                        id_program: 1,
+                        nama_program: 'Bantuan Bibit Hortikultura & P2L Agats',
+                        jenis_bantuan: 'Hidroponik/P2L',
+                        id_distrik: 1,
+                        kampung: 'Agats',
+                        jumlah_unit: '25 Paket',
+                        tanggal_penyaluran: '2026-11-22',
+                        status_penyaluran: 'Tersalurkan',
+                        sumber_keterangan: 'Pendampingan HKTI DPC Kabupaten Asmat'
+                    }
+                ],
+                berita: [
+                    {
+                        id_berita: 1,
+                        judul: 'Pendataan Kelompok Tani, Peternak & Nelayan di 23 Distrik Asmat',
+                        kategori: 'Kegiatan Lapangan',
+                        id_distrik: 1,
+                        tanggal_kegiatan: '2026-11-24',
+                        status_publikasi: 'Terbit',
+                        ringkasan: 'HKTI DPC Kabupaten Asmat mengaktifkan pendataan kelompok usaha, komoditas, dan kendala infrastruktur berbasis tablet.',
+                        isi_berita: 'Sekretariat HKTI DPC Kabupaten Asmat di Jl. Zegward, samping RSUD Agats (Kontak: 082349960907) menjalankan pendataan kelompok tani, peternak, dan nelayan di 23 distrik (91.18.01 Agats hingga 91.18.23 Koroway Buluanop), mencakup komoditas, jalur air, BBM, cold storage, internet, modal, dan penyaluran program.'
+                    }
+                ]
+            };
+        }
+
+        let state = createDefaultState();
+        let syncInfo = {
+            mode: 'local', // 'local' | 'connected' | 'error'
+            busy: false,
+            lastSync: '',
+            detail: 'Belum tersinkron ke cloud. Data tersimpan aman di localStorage.'
+        };
+
+        function loadState() {
+            try {
+                const raw = window.localStorage.getItem(STORAGE_KEY);
+                if (!raw) return createDefaultState();
+                const parsed = JSON.parse(raw);
+                const def = createDefaultState();
+                return {
+                    supabase: {
+                        projectUrl: sanitizeProjectUrl(parsed?.supabase?.projectUrl || def.supabase.projectUrl),
+                        apiKey: String(parsed?.supabase?.apiKey || '')
+                    },
+                    customLogoDataUrl: typeof parsed?.customLogoDataUrl === 'string' ? parsed.customLogoDataUrl : '',
+                    pengurus: Array.isArray(parsed?.pengurus) ? parsed.pengurus : def.pengurus,
+                    kelompok: Array.isArray(parsed?.kelompok) ? parsed.kelompok : def.kelompok,
+                    kendala: Array.isArray(parsed?.kendala) ? parsed.kendala : def.kendala,
+                    program: Array.isArray(parsed?.program) ? parsed.program : def.program,
+                    berita: Array.isArray(parsed?.berita) ? parsed.berita : def.berita
+                };
+            } catch (e) {
+                return createDefaultState();
+            }
+        }
+
+        function saveState() {
+            try {
+                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {
+                showToast('Penyimpanan lokal browser penuh atau dibatasi.', true);
+            }
+        }
+
+        // =====================================================================
+        // 3. KONEKSI SUPABASE REST API (/rest/v1/) & PEMBERSIHAN URL OTOMATIS
+        // =====================================================================
+        function sanitizeProjectUrl(inputUrl) {
+            const cleaned = String(inputUrl || '')
+                .trim()
+                .replace(/\/rest\/v1\/?$/i, '')
+                .replace(/\/+$/, '');
+            return cleaned || DEFAULT_PROJECT_URL;
+        }
+
+        function getRestBaseUrl() {
+            return sanitizeProjectUrl(state?.supabase?.projectUrl) + '/rest/v1';
+        }
+
+        function isSupabaseReady() {
+            const url = sanitizeProjectUrl(state?.supabase?.projectUrl);
+            const key = String(state?.supabase?.apiKey || '').trim();
+            return Boolean(url && key);
+        }
+
+        async function restRequest(table, { method = 'GET', query = '', body = undefined } = {}) {
+            if (!isSupabaseReady()) {
+                return { ok: false, error: 'Project URL atau Publishable/Anon Key belum diisi.' };
+            }
+            try {
+                const key = String(state.supabase.apiKey || '').trim();
+                const endpoint = getRestBaseUrl() + '/' + table + (query ? '?' + query : '');
+                const headers = {
+                    'apikey': key,
+                    'Authorization': 'Bearer ' + key,
+                    'Content-Type': 'application/json'
+                };
+                if (method === 'POST' || method === 'PATCH') {
+                    headers['Prefer'] = 'return=representation';
+                }
+
+                const res = await fetch(endpoint, {
+                    method,
+                    headers,
+                    body: body !== undefined ? JSON.stringify(body) : undefined
+                });
+
+                if (!res.ok) {
+                    const errBody = await res.text().catch(() => '');
+                    return { ok: false, error: errBody || ('HTTP ' + res.status) };
+                }
+
+                if (res.status === 204) return { ok: true, data: null };
+                const txt = await res.text();
+                return { ok: true, data: txt ? JSON.parse(txt) : null };
+            } catch (err) {
+                return { ok: false, error: err?.message || 'Koneksi jaringan terputus.' };
+            }
+        }
+
+        async function testAndSyncSupabase() {
+            if (!isSupabaseReady()) {
+                syncInfo.mode = 'local';
+                syncInfo.detail = 'Isi Publishable / Anon Key di tab Supabase, CSV & SQL terlebih dahulu. Mode lokal aktif.';
+                updateConnectionUi();
+                showToast('Isi Publishable/Anon Key dahulu. Tetap aman di Mode Lokal.', true);
+                return;
+            }
+
+            try {
+                syncInfo.busy = true;
+                updateConnectionUi();
+
+                const [rDistrik, rPengurus, rPengelola, rKelompok, rKomoditas, rKendala, rProgram, rBerita] = await Promise.all([
+                    restRequest('distrik', { query: 'select=id_distrik,kode_wilayah,nama_distrik&order=id_distrik.asc' }),
+                    restRequest('pengurus', { query: 'select=*&order=id_pengurus.desc' }),
+                    restRequest('pengelola_data', { query: 'select=id_pengurus,status_pengelola' }),
+                    restRequest('kelompok_usaha', { query: 'select=*&order=id_kelompok.desc' }),
+                    restRequest('kelompok_komoditas', { query: 'select=*' }),
+                    restRequest('kendala_infrastruktur', { query: 'select=*&order=id_kendala.desc' }),
+                    restRequest('program_bantuan', { query: 'select=*&order=id_program.desc' }),
+                    restRequest('berita_kegiatan', { query: 'select=*&order=id_berita.desc' })
+                ]);
+
+                syncInfo.busy = false;
+
+                if (!rKelompok.ok || !rKendala.ok || !rProgram.ok || !rBerita.ok || !rPengurus.ok) {
+                    syncInfo.mode = 'error';
+                    syncInfo.detail = 'Gagal sinkron ke Supabase (' + (rKelompok.error || rKendala.error || 'Periksa tabel/RLS') + '). Menggunakan data lokal.';
+                    updateConnectionUi();
+                    showToast('Gagal sinkron Supabase, menggunakan cadangan lokal.', true);
+                    return;
+                }
+
+                if (rDistrik.ok && Array.isArray(rDistrik.data) && rDistrik.data.length > 0) {
+                    DISTRIK_23.splice(0, DISTRIK_23.length, ...rDistrik.data.map((d) => ({
+                        id: Number(d.id_distrik),
+                        kode: d.kode_wilayah,
+                        nama: d.nama_distrik
+                    })));
+                }
+
+                const pengelolaIds = new Set();
+                if (rPengelola.ok && Array.isArray(rPengelola.data)) {
+                    rPengelola.data.forEach((pg) => {
+                        if (pg.status_pengelola !== 'Nonaktif') pengelolaIds.add(Number(pg.id_pengurus));
+                    });
+                }
+
+                const komMap = new Map();
+                if (rKomoditas.ok && Array.isArray(rKomoditas.data)) {
+                    rKomoditas.data.forEach((k) => {
+                        if (!komMap.has(Number(k.id_kelompok))) komMap.set(Number(k.id_kelompok), k);
+                    });
+                }
+
+                state.pengurus = (rPengurus.data || []).map((p) => ({
+                    id_pengurus: Number(p.id_pengurus),
+                    tingkatan: p.tingkatan,
+                    nama_lengkap: p.nama_lengkap,
+                    jenis_kelamin: p.jenis_kelamin,
+                    no_hp_wa: p.no_hp_wa,
+                    id_distrik: p.id_distrik ? Number(p.id_distrik) : null,
+                    kampung: p.kampung || '',
+                    jabatan: p.jabatan,
+                    bidang: p.bidang || '',
+                    hak_akses: p.hak_akses || 'Operator Lapangan',
+                    sebagai_pengelola: pengelolaIds.has(Number(p.id_pengurus))
+                }));
+
+                state.kelompok = (rKelompok.data || []).map((k) => {
+                    const kom = komMap.get(Number(k.id_kelompok));
+                    return {
+                        id_kelompok: Number(k.id_kelompok),
+                        nama_kelompok: k.nama_kelompok,
+                        jenis_kelompok: k.jenis_kelompok,
+                        id_distrik: Number(k.id_distrik),
+                        kampung: k.kampung,
+                        nama_ketua: k.nama_ketua,
+                        jumlah_anggota: Number(k.jumlah_anggota || 1),
+                        luas_area_hektar: Number(k.luas_area_hektar || 0),
+                        status_pendampingan: k.status_pendampingan || 'Terdata',
+                        jenis_komoditas: kom?.jenis_komoditas || 'Komoditas Lokal',
+                        perkiraan_hasil: Number(kom?.perkiraan_hasil || 0),
+                        satuan: kom?.satuan || 'Kg'
+                    };
+                });
+
+                state.kendala = (rKendala.data || []).map((item) => ({
+                    id_kendala: Number(item.id_kendala),
+                    id_distrik: Number(item.id_distrik),
+                    kampung: item.kampung,
+                    akses_jalur_air: item.akses_jalur_air || '',
+                    kebutuhan_bbm_transport: item.kebutuhan_bbm_transport || '',
+                    fasilitas_penyimpanan_cold_storage: item.fasilitas_penyimpanan_cold_storage || '',
+                    kondisi_jaringan_internet: item.kondisi_jaringan_internet || '',
+                    kebutuhan_modal_sarana: item.kebutuhan_modal_sarana || '',
+                    prioritas_penanganan: item.prioritas_penanganan || 'Sedang',
+                    ringkasan_kendala: item.ringkasan_kendala,
+                    tanggal_catatan: item.tanggal_catatan || ''
+                }));
+
+                state.program = (rProgram.data || []).map((item) => ({
+                    id_program: Number(item.id_program),
+                    nama_program: item.nama_program,
+                    jenis_bantuan: item.jenis_bantuan,
+                    id_distrik: Number(item.id_distrik),
+                    kampung: item.kampung || '',
+                    jumlah_unit: item.jumlah_unit,
+                    tanggal_penyaluran: item.tanggal_penyaluran,
+                    status_penyaluran: item.status_penyaluran,
+                    sumber_keterangan: item.sumber_keterangan || ''
+                }));
+
+                state.berita = (rBerita.data || []).map((b) => ({
+                    id_berita: Number(b.id_berita),
+                    judul: b.judul,
+                    kategori: b.kategori,
+                    id_distrik: b.id_distrik ? Number(b.id_distrik) : 1,
+                    tanggal_kegiatan: b.tanggal_kegiatan || '',
+                    status_publikasi: b.status_publikasi || 'Terbit',
+                    ringkasan: b.ringkasan,
+                    isi_berita: b.isi_berita
+                }));
+
+                saveState();
+                syncInfo.mode = 'connected';
+                syncInfo.lastSync = new Date().toLocaleTimeString('id-ID');
+                syncInfo.detail = 'Terhubung ke ' + getRestBaseUrl() + ' (Sinkron: ' + syncInfo.lastSync + ').';
+                populateDistrictDropdowns();
+                renderAllViews();
+                showToast('Tes & sinkronisasi Supabase berhasil.');
+            } catch (err) {
+                syncInfo.busy = false;
+                syncInfo.mode = 'error';
+                syncInfo.detail = 'Gangguan saat sinkronisasi. Data lokal tetap aman.';
+                updateConnectionUi();
+                showToast('Gangguan jaringan, tetap di Mode Lokal.', true);
+            }
+        }
+
+        function updateConnectionUi() {
+            const pill = document.getElementById('header-conn-pill');
+            const dot = document.getElementById('header-conn-dot');
+            const label = document.getElementById('header-conn-label');
+            const badge = document.getElementById('tab-conn-badge');
+            const info = document.getElementById('tab-conn-info');
+            const icon = document.getElementById('header-sync-icon');
+
+            if (icon) {
+                icon.className = syncInfo.busy ? 'ph-bold ph-arrows-clockwise text-base animate-spin' : 'ph-bold ph-arrows-clockwise text-base';
+            }
+
+            if (syncInfo.busy) {
+                if (pill) pill.className = 'flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-900 text-xs font-bold';
+                if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-sky-500 animate-ping';
+                if (label) label.textContent = 'Menyinkronkan...';
+                if (badge) {
+                    badge.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold bg-sky-100 text-sky-800';
+                    badge.textContent = 'Sinkronisasi';
+                }
+            } else if (syncInfo.mode === 'connected') {
+                if (pill) pill.className = 'flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold';
+                if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500';
+                if (label) label.textContent = 'Supabase Terhubung';
+                if (badge) {
+                    badge.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800';
+                    badge.textContent = 'Terhubung';
+                }
+            } else {
+                if (pill) pill.className = 'flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold';
+                if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
+                if (label) label.textContent = 'Mode Lokal (localStorage)';
+                if (badge) {
+                    badge.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800';
+                    badge.textContent = 'Mode Lokal';
+                }
+            }
+
+            if (info) info.textContent = syncInfo.detail;
+        }
+
+        // =====================================================================
+        // 4. UTILITAS UI, NAVIGASI TAB & SALIN TEKS
+        // =====================================================================
+        let toastTimeout = null;
+        function showToast(msg, isErr = false) {
+            const banner = document.getElementById('toast-banner');
+            const card = document.getElementById('toast-card');
+            const icon = document.getElementById('toast-icon');
+            const text = document.getElementById('toast-message');
+            if (!banner || !card || !icon || !text) return;
+
+            text.textContent = msg;
+            if (isErr) {
+                card.className = 'flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-2xl border text-sm font-semibold bg-rose-950 text-white border-rose-700';
+                icon.className = 'ph-fill ph-warning-circle text-rose-400 text-xl shrink-0';
+            } else {
+                card.className = 'flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-2xl border text-sm font-semibold bg-slate-900 text-white border-slate-700';
+                icon.className = 'ph-fill ph-check-circle text-emerald-400 text-xl shrink-0';
+            }
+
+            banner.classList.remove('opacity-0', 'translate-y-3');
+            banner.classList.add('opacity-100', 'translate-y-0');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                banner.classList.remove('opacity-100', 'translate-y-0');
+                banner.classList.add('opacity-0', 'translate-y-3');
+            }, 2800);
+        }
+
+        function copyText(value, successMsg) {
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = value;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast(ok ? (successMsg || 'Tersalin.') : 'Gagal menyalin.', !ok);
+            } catch (e) {
+                showToast('Gagal menyalin teks.', true);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.nav-tab').forEach((btn) => {
+                btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+            });
+            document.querySelectorAll('.tab-section').forEach((sec) => {
+                sec.classList.toggle('active', sec.id === 'panel-' + tabId);
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getDistrikById(id) {
+            return DISTRIK_23.find((d) => Number(d.id) === Number(id)) || { id: 0, kode: '91.18', nama: 'Kabupaten Asmat' };
+        }
+
+        // =====================================================================
+        // 5. RENDER DATA KE ANTARMUKA
+        // =====================================================================
+        function populateDistrictDropdowns() {
+            const ids = ['select-distrik-kelompok', 'select-distrik-kendala', 'select-distrik-program', 'select-distrik-pengurus', 'select-distrik-berita'];
+            ids.forEach((id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const prev = el.value;
+                const optional = id === 'select-distrik-pengurus' || id === 'select-distrik-berita';
+                let html = optional ? '<option value="">-- Pilih Distrik (Opsional) --</option>' : '';
+                DISTRIK_23.forEach((d) => {
+                    html += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' — ' + d.nama) + '</option>';
+                });
+                el.innerHTML = html;
+                if (prev) el.value = prev;
+            });
+
+            const filterKelompok = document.getElementById('filter-distrik-kelompok');
+            if (filterKelompok) {
+                const prevFilter = filterKelompok.value || 'SEMUA';
+                let opts = '<option value="SEMUA">Semua 23 Distrik</option>';
+                DISTRIK_23.forEach((d) => {
+                    opts += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' ' + d.nama) + '</option>';
+                });
+                filterKelompok.innerHTML = opts;
+                filterKelompok.value = prevFilter;
+            }
+        }
+
+        function renderRingkasan() {
+            const kpi = document.getElementById('kpi-cards');
+            if (kpi) {
+                const totalAnggota = state.kelompok.reduce((acc, k) => acc + (Number(k.jumlah_anggota) || 0), 0);
+                const cards = [
+                    { title: 'Kelompok Usaha', val: state.kelompok.length, sub: totalAnggota + ' anggota tercatat', icon: 'ph-users-three', tone: 'bg-hkti-pale text-hkti-dark' },
+                    { title: 'Distrik Asmat', val: '23', sub: 'Kode 91.18.01 – 91.18.23', icon: 'ph-map-pin-line', tone: 'bg-emerald-100 text-emerald-800' },
+                    { title: 'Kendala Infrastruktur', val: state.kendala.length, sub: 'Air, BBM, cold storage & modal', icon: 'ph-boat', tone: 'bg-amber-100 text-amber-800' },
+                    { title: 'Program & Bantuan', val: state.program.length, sub: state.berita.length + ' berita kegiatan', icon: 'ph-package', tone: 'bg-sky-100 text-sky-800' }
+                ];
+                kpi.innerHTML = cards.map((c) => (
+                    '<div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 flex items-start justify-between gap-3">' +
+                        '<div>' +
+                            '<div class="text-xs font-semibold text-slate-500">' + escapeHtml(c.title) + '</div>' +
+                            '<div class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">' + escapeHtml(c.val) + '</div>' +
+                            '<div class="text-xs text-slate-500 mt-1">' + escapeHtml(c.sub) + '</div>' +
+                        '</div>' +
+                        '<div class="w-11 h-11 rounded-2xl ' + c.tone + ' flex items-center justify-center shrink-0"><i class="ph-bold ' + c.icon + ' text-xl"></i></div>' +
+                    '</div>'
+                )).join('');
+            }
+
+            const grid = document.getElementById('distrik-23-grid');
+            if (grid) {
+                grid.innerHTML = DISTRIK_23.map((d) => {
+                    const count = state.kelompok.filter((k) => Number(k.id_distrik) === Number(d.id)).length;
+                    return (
+                        '<button type="button" onclick="filterByDistrict(' + d.id + ')" class="touch-target text-left p-3 rounded-xl border border-slate-200 hover:border-hkti-primary hover:bg-emerald-50/50 transition cursor-pointer">' +
+                            '<div class="text-[11px] font-mono font-bold text-hkti-primary">' + escapeHtml(d.kode) + '</div>' +
+                            '<div class="font-display font-bold text-sm text-slate-900">' + escapeHtml(d.nama) + '</div>' +
+                            '<div class="text-xs text-slate-500 mt-0.5">' + count + ' kelompok</div>' +
+                        '</button>'
+                    );
+                }).join('');
+            }
+        }
+
+        function filterByDistrict(idDistrik) {
+            const sel = document.getElementById('filter-distrik-kelompok');
+            if (sel) sel.value = String(idDistrik);
+            renderKelompokList();
+            switchTab('kelompok');
+        }
+
+        function renderKelompokList() {
+            const box = document.getElementById('kelompok-list');
+            if (!box) return;
+            const jenis = document.getElementById('filter-jenis-kelompok')?.value || 'SEMUA';
+            const distrik = document.getElementById('filter-distrik-kelompok')?.value || 'SEMUA';
+
+            const rows = state.kelompok.filter((k) => {
+                const okJenis = jenis === 'SEMUA' || k.jenis_kelompok === jenis;
+                const okDist = distrik === 'SEMUA' || Number(k.id_distrik) === Number(distrik);
+                return okJenis && okDist;
+            });
+
+            if (rows.length === 0) {
+                box.innerHTML = '<div class="p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-sm text-slate-500">Belum ada kelompok usaha pada filter ini.</div>';
+                return;
+            }
+
+            box.innerHTML = rows.map((k) => {
+                const d = getDistrikById(k.id_distrik);
+                return (
+                    '<div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2.5">' +
+                        '<div class="flex flex-wrap items-start justify-between gap-2">' +
+                            '<div>' +
+                                '<div class="flex flex-wrap items-center gap-1.5">' +
+                                    '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-hkti-pale text-hkti-dark">' + escapeHtml(k.jenis_kelompok) + '</span>' +
+                                    '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200/70 text-slate-700">' + escapeHtml(d.kode + ' ' + d.nama) + ' • ' + escapeHtml(k.kampung) + '</span>' +
+                                '</div>' +
+                                '<h3 class="font-display font-bold text-base text-slate-900 mt-1">' + escapeHtml(k.nama_kelompok) + '</h3>' +
+                            '</div>' +
+                            '<button type="button" onclick="deleteItem(\'kelompok\', ' + k.id_kelompok + ')" class="touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold inline-flex items-center gap-1 cursor-pointer">' +
+                                '<i class="ph-bold ph-trash"></i><span>Hapus</span>' +
+                            '</button>' +
+                        '</div>' +
+                        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-slate-600">' +
+                            '<div>Ketua: <strong class="text-slate-800">' + escapeHtml(k.nama_ketua) + '</strong></div>' +
+                            '<div>Anggota: <strong class="text-slate-800">' + escapeHtml(k.jumlah_anggota) + '</strong></div>' +
+                            '<div>Luas: <strong class="text-slate-800">' + escapeHtml(k.luas_area_hektar) + ' Ha</strong></div>' +
+                            '<div>Status: <strong class="text-emerald-700">' + escapeHtml(k.status_pendampingan) + '</strong></div>' +
+                        '</div>' +
+                        '<div class="p-2.5 rounded-xl bg-white border border-slate-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">' +
+                            '<span><strong>Komoditas:</strong> ' + escapeHtml(k.jenis_komoditas) + '</span>' +
+                            '<span class="font-bold text-hkti-dark">' + escapeHtml(k.perkiraan_hasil) + ' ' + escapeHtml(k.satuan) + '</span>' +
+                        '</div>' +
+                    '</div>'
+                );
+            }).join('');
+        }
+
+        function renderKendalaList() {
+            const box = document.getElementById('kendala-list');
+            if (!box) return;
+            const prio = document.getElementById('filter-prioritas-kendala')?.value || 'SEMUA';
+            const rows = state.kendala.filter((item) => prio === 'SEMUA' || item.prioritas_penanganan === prio);
+
+            if (rows.length === 0) {
+                box.innerHTML = '<div class="p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-sm text-slate-500">Belum ada catatan kendala infrastruktur.</div>';
+                return;
+            }
+
+            box.innerHTML = rows.map((item) => {
+                const d = getDistrikById(item.id_distrik);
+                const badge = item.prioritas_penanganan === 'Tinggi' ? 'bg-rose-100 text-rose-800' : item.prioritas_penanganan === 'Rendah' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800';
+                return (
+                    '<div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">' +
+                        '<div class="flex flex-wrap items-center justify-between gap-2">' +
+                            '<div class="flex flex-wrap items-center gap-2">' +
+                                '<span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold ' + badge + '">Prioritas ' + escapeHtml(item.prioritas_penanganan) + '</span>' +
+                                '<span class="text-xs font-bold text-slate-700">' + escapeHtml(d.kode + ' ' + d.nama) + ' • ' + escapeHtml(item.kampung) + '</span>' +
+                            '</div>' +
+                            '<button type="button" onclick="deleteItem(\'kendala\', ' + item.id_kendala + ')" class="touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold cursor-pointer"><i class="ph-bold ph-trash"></i></button>' +
+                        '</div>' +
+                        '<p class="text-sm font-semibold text-slate-900">' + escapeHtml(item.ringkasan_kendala) + '</p>' +
+                        '<div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200/80">' +
+                            '<div><strong>Jalur Air:</strong> ' + escapeHtml(item.akses_jalur_air || '-') + '</div>' +
+                            '<div><strong>BBM:</strong> ' + escapeHtml(item.kebutuhan_bbm_transport || '-') + '</div>' +
+                            '<div><strong>Cold Storage:</strong> ' + escapeHtml(item.fasilitas_penyimpanan_cold_storage || '-') + '</div>' +
+                            '<div><strong>Internet & Modal:</strong> ' + escapeHtml(item.kondisi_jaringan_internet || '-') + ' • ' + escapeHtml(item.kebutuhan_modal_sarana || '-') + '</div>' +
+                        '</div>' +
+                    '</div>'
+                );
+            }).join('');
+        }
+
+        function renderProgramList() {
+            const box = document.getElementById('program-list');
+            if (!box) return;
+            const st = document.getElementById('filter-status-program')?.value || 'SEMUA';
+            const rows = state.program.filter((item) => st === 'SEMUA' || item.status_penyaluran === st);
+
+            if (rows.length === 0) {
+                box.innerHTML = '<div class="p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-sm text-slate-500">Belum ada program atau bantuan tercatat.</div>';
+                return;
+            }
+
+            box.innerHTML = rows.map((item) => {
+                const d = getDistrikById(item.id_distrik);
+                return (
+                    '<div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">' +
+                        '<div class="flex flex-wrap items-start justify-between gap-2">' +
+                            '<div>' +
+                                '<div class="flex flex-wrap items-center gap-1.5">' +
+                                    '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">' + escapeHtml(item.jenis_bantuan) + '</span>' +
+                                    '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">' + escapeHtml(item.status_penyaluran) + '</span>' +
+                                '</div>' +
+                                '<h3 class="font-display font-bold text-base text-slate-900 mt-1">' + escapeHtml(item.nama_program) + '</h3>' +
+                            '</div>' +
+                            '<button type="button" onclick="deleteItem(\'program\', ' + item.id_program + ')" class="touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold cursor-pointer"><i class="ph-bold ph-trash"></i></button>' +
+                        '</div>' +
+                        '<div class="text-xs text-slate-600 flex flex-wrap justify-between gap-2">' +
+                            '<span><strong>Lokasi:</strong> ' + escapeHtml(d.kode + ' ' + d.nama) + (item.kampung ? ' • ' + escapeHtml(item.kampung) : '') + '</span>' +
+                            '<span><strong>Jumlah:</strong> ' + escapeHtml(item.jumlah_unit) + ' • ' + escapeHtml(item.tanggal_penyaluran) + '</span>' +
+                        '</div>' +
+                        (item.sumber_keterangan ? '<p class="text-xs text-slate-500">' + escapeHtml(item.sumber_keterangan) + '</p>' : '') +
+                    '</div>'
+                );
+            }).join('');
+        }
+
+        function renderBeritaList() {
+            const box = document.getElementById('berita-list');
+            if (!box) return;
+            if (state.berita.length === 0) {
+                box.innerHTML = '<div class="col-span-full p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-sm text-slate-500">Belum ada berita kegiatan.</div>';
+                return;
+            }
+            box.innerHTML = state.berita.map((b) => {
+                const d = getDistrikById(b.id_distrik);
+                return (
+                    '<article class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 flex flex-col justify-between gap-3">' +
+                        '<div class="space-y-2">' +
+                            '<div class="flex items-center justify-between gap-2 text-xs">' +
+                                '<span class="px-2.5 py-0.5 rounded-full font-bold bg-hkti-pale text-hkti-dark">' + escapeHtml(b.kategori) + '</span>' +
+                                '<span class="text-slate-500">' + escapeHtml(b.tanggal_kegiatan || '-') + '</span>' +
+                            '</div>' +
+                            '<h3 class="font-display font-bold text-base text-slate-900">' + escapeHtml(b.judul) + '</h3>' +
+                            '<div class="text-xs font-semibold text-slate-500">' + escapeHtml(d.nama) + ' • ' + escapeHtml(b.status_publikasi) + '</div>' +
+                            '<p class="text-xs sm:text-sm text-slate-600">' + escapeHtml(b.ringkasan) + '</p>' +
+                            '<p class="text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-200/70 leading-relaxed">' + escapeHtml(b.isi_berita) + '</p>' +
+                        '</div>' +
+                        '<div class="flex justify-end pt-2 border-t border-slate-200/70">' +
+                            '<button type="button" onclick="deleteItem(\'berita\', ' + b.id_berita + ')" class="touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-trash"></i><span>Hapus</span></button>' +
+                        '</div>' +
+                    '</article>'
+                );
+            }).join('');
+        }
+
+        function renderPengurusList() {
+            const box = document.getElementById('pengurus-list');
+            const pBox = document.getElementById('pengelola-list');
+            if (!box) return;
+            const tingkatan = document.getElementById('filter-tingkatan-pengurus')?.value || 'SEMUA';
+            const rows = state.pengurus.filter((p) => tingkatan === 'SEMUA' || p.tingkatan === tingkatan);
+
+            box.innerHTML = rows.length === 0
+                ? '<div class="p-4 text-center rounded-xl bg-slate-50 text-sm text-slate-500">Belum ada pengurus.</div>'
+                : rows.map((p) => {
+                    const d = p.id_distrik ? getDistrikById(p.id_distrik) : null;
+                    return (
+                        '<div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 flex flex-wrap items-center justify-between gap-2">' +
+                            '<div class="space-y-0.5">' +
+                                '<div class="flex flex-wrap items-center gap-1.5">' +
+                                    '<span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-hkti-pale text-hkti-dark">' + escapeHtml(p.tingkatan) + '</span>' +
+                                    '<span class="text-xs font-semibold text-slate-600">' + escapeHtml(p.jabatan) + (p.bidang ? ' • ' + escapeHtml(p.bidang) : '') + '</span>' +
+                                '</div>' +
+                                '<div class="font-display font-bold text-sm sm:text-base text-slate-900">' + escapeHtml(p.nama_lengkap) + ' <span class="text-xs font-normal text-slate-500">(' + escapeHtml(p.jenis_kelamin) + ')</span></div>' +
+                                '<div class="text-xs text-slate-500">WA: ' + escapeHtml(p.no_hp_wa) + (d ? ' • ' + escapeHtml(d.nama) : '') + (p.kampung ? ' • ' + escapeHtml(p.kampung) : '') + '</div>' +
+                            '</div>' +
+                            '<div class="flex items-center gap-2">' +
+                                '<button type="button" onclick="togglePengelolaRole(' + p.id_pengurus + ')" class="touch-target px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer ' + (p.sebagai_pengelola ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700') + '">' +
+                                    (p.sebagai_pengelola ? 'Pengelola Data' : 'Jadikan Pengelola') +
+                                '</button>' +
+                                '<button type="button" onclick="deleteItem(\'pengurus\', ' + p.id_pengurus + ')" class="touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold cursor-pointer"><i class="ph-bold ph-trash"></i></button>' +
+                            '</div>' +
+                        '</div>'
+                    );
+                }).join('');
+
+            if (pBox) {
+                const pengelola = state.pengurus.filter((p) => Boolean(p.sebagai_pengelola));
+                pBox.innerHTML = pengelola.length === 0
+                    ? '<p class="text-xs text-slate-500 col-span-2">Belum ada pengelola data.</p>'
+                    : pengelola.map((pg) => (
+                        '<div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs space-y-0.5">' +
+                            '<div class="font-bold text-slate-900">' + escapeHtml(pg.nama_lengkap) + '</div>' +
+                            '<div class="font-semibold text-emerald-900">' + escapeHtml(pg.tingkatan) + ' • ' + escapeHtml(pg.jabatan) + '</div>' +
+                            '<div class="text-slate-600">Akses: ' + escapeHtml(pg.hak_akses) + ' • WA: ' + escapeHtml(pg.no_hp_wa) + '</div>' +
+                        '</div>'
+                    )).join('');
+            }
+        }
+
+        function renderKoneksiTab() {
+            const sqlView = document.getElementById('sql-script-view');
+            if (sqlView) sqlView.textContent = SQL_SCHEMA;
+
+            const urlIn = document.getElementById('supabase-url-input');
+            const keyIn = document.getElementById('supabase-key-input');
+            if (urlIn) urlIn.value = sanitizeProjectUrl(state?.supabase?.projectUrl);
+            if (keyIn) keyIn.value = state?.supabase?.apiKey || '';
+            applyLogoDisplay();
+        }
+
+        function applyLogoDisplay() {
+            const svgEl = document.getElementById('hkti-vector-logo');
+            const imgEl = document.getElementById('hkti-custom-logo');
+            if (!svgEl || !imgEl) return;
+
+            if (state.customLogoDataUrl) {
+                imgEl.src = state.customLogoDataUrl;
+                imgEl.classList.remove('hidden');
+                svgEl.classList.add('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+                svgEl.classList.remove('hidden');
+            }
+        }
+
+        function handleCustomLogoError() {
+            const svgEl = document.getElementById('hkti-vector-logo');
+            const imgEl = document.getElementById('hkti-custom-logo');
+            if (imgEl) imgEl.classList.add('hidden');
+            if (svgEl) svgEl.classList.remove('hidden');
+        }
+
+        function handleLogoUpload(e) {
+            const file = e.target?.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+                state.customLogoDataUrl = String(evt.target?.result || '');
+                saveState();
+                applyLogoDisplay();
+                showToast('Logo lokal diterapkan.');
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        }
+
+        function resetLogoToVector() {
+            state.customLogoDataUrl = '';
+            saveState();
+            applyLogoDisplay();
+            showToast('Kembali ke logo vektor SVG HKTI.');
+        }
+
+        function renderAllViews() {
+            renderRingkasan();
+            renderKelompokList();
+            renderKendalaList();
+            renderProgramList();
+            renderBeritaList();
+            renderPengurusList();
+            renderKoneksiTab();
+            updateConnectionUi();
+        }
+
+        // =====================================================================
+        // 6. HANDLER FORM, HAPUS, CSV & MODAL
+        // =====================================================================
+        async function handleSubmitKelompok(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const nextId = state.kelompok.reduce((m, x) => Math.max(m, Number(x.id_kelompok) || 0), 0) + 1;
+            const item = {
+                id_kelompok: nextId,
+                nama_kelompok: String(fd.get('nama_kelompok') || '').trim(),
+                jenis_kelompok: String(fd.get('jenis_kelompok') || 'Kelompok Tani'),
+                id_distrik: Number(fd.get('id_distrik') || 1),
+                kampung: String(fd.get('kampung') || '').trim(),
+                nama_ketua: String(fd.get('nama_ketua') || '').trim(),
+                jumlah_anggota: Number(fd.get('jumlah_anggota') || 1),
+                luas_area_hektar: Number(fd.get('luas_area_hektar') || 0),
+                status_pendampingan: String(fd.get('status_pendampingan') || 'Terdata'),
+                jenis_komoditas: String(fd.get('jenis_komoditas') || '').trim(),
+                perkiraan_hasil: Number(fd.get('perkiraan_hasil') || 0),
+                satuan: String(fd.get('satuan') || 'Kg').trim()
+            };
+
+            if (isSupabaseReady()) {
+                const created = await restRequest('kelompok_usaha', {
+                    method: 'POST',
+                    body: {
+                        nama_kelompok: item.nama_kelompok,
+                        jenis_kelompok: item.jenis_kelompok,
+                        id_distrik: item.id_distrik,
+                        kampung: item.kampung,
+                        nama_ketua: item.nama_ketua,
+                        jumlah_anggota: item.jumlah_anggota,
+                        luas_area_hektar: item.luas_area_hektar,
+                        status_pendampingan: item.status_pendampingan
+                    }
+                });
+                if (created.ok && Array.isArray(created.data) && created.data[0]) {
+                    const sqlId = Number(created.data[0].id_kelompok);
+                    item.id_kelompok = sqlId;
+                    await restRequest('kelompok_komoditas', {
+                        method: 'POST',
+                        body: {
+                            id_kelompok: sqlId,
+                            jenis_komoditas: item.jenis_komoditas,
+                            perkiraan_hasil: item.perkiraan_hasil,
+                            satuan: item.satuan,
+                            periode_panen: 'Per Siklus'
+                        }
+                    });
+                    syncInfo.mode = 'connected';
+                    syncInfo.lastSync = new Date().toLocaleTimeString('id-ID');
+                    syncInfo.detail = 'Kelompok tersimpan ke Supabase & localStorage (' + syncInfo.lastSync + ').';
+                } else {
+                    syncInfo.mode = 'error';
+                    syncInfo.detail = 'Tersimpan di localStorage (' + (created.error || 'offline') + ').';
+                }
+            }
+
+            state.kelompok.unshift(item);
+            saveState();
+            e.target.reset();
+            renderAllViews();
+            showToast('Kelompok & komoditas tersimpan.');
+        }
+
+        async function handleSubmitKendala(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const nextId = state.kendala.reduce((m, x) => Math.max(m, Number(x.id_kendala) || 0), 0) + 1;
+            const item = {
+                id_kendala: nextId,
+                id_distrik: Number(fd.get('id_distrik') || 1),
+                kampung: String(fd.get('kampung') || '').trim(),
+                akses_jalur_air: String(fd.get('akses_jalur_air') || '').trim(),
+                kebutuhan_bbm_transport: String(fd.get('kebutuhan_bbm_transport') || '').trim(),
+                fasilitas_penyimpanan_cold_storage: String(fd.get('fasilitas_penyimpanan_cold_storage') || '').trim(),
+                kondisi_jaringan_internet: String(fd.get('kondisi_jaringan_internet') || 'Lemah / Terputus'),
+                kebutuhan_modal_sarana: String(fd.get('kebutuhan_modal_sarana') || '').trim(),
+                prioritas_penanganan: String(fd.get('prioritas_penanganan') || 'Sedang'),
+                ringkasan_kendala: String(fd.get('ringkasan_kendala') || '').trim(),
+                tanggal_catatan: new Date().toISOString().slice(0, 10)
+            };
+
+            if (isSupabaseReady()) {
+                const created = await restRequest('kendala_infrastruktur', { method: 'POST', body: item });
+                if (created.ok && Array.isArray(created.data) && created.data[0]) {
+                    item.id_kendala = Number(created.data[0].id_kendala);
+                    syncInfo.mode = 'connected';
+                }
+            }
+
+            state.kendala.unshift(item);
+            saveState();
+            e.target.reset();
+            renderAllViews();
+            showToast('Kendala infrastruktur tersimpan.');
+        }
+
+        async function handleSubmitProgram(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const nextId = state.program.reduce((m, x) => Math.max(m, Number(x.id_program) || 0), 0) + 1;
+            const item = {
+                id_program: nextId,
+                nama_program: String(fd.get('nama_program') || '').trim(),
+                jenis_bantuan: String(fd.get('jenis_bantuan') || 'Bibit'),
+                id_distrik: Number(fd.get('id_distrik') || 1),
+                kampung: String(fd.get('kampung') || '').trim(),
+                jumlah_unit: String(fd.get('jumlah_unit') || '').trim(),
+                tanggal_penyaluran: String(fd.get('tanggal_penyaluran') || new Date().toISOString().slice(0, 10)),
+                status_penyaluran: String(fd.get('status_penyaluran') || 'Tersalurkan'),
+                sumber_keterangan: String(fd.get('sumber_keterangan') || '').trim()
+            };
+
+            if (isSupabaseReady()) {
+                const created = await restRequest('program_bantuan', { method: 'POST', body: item });
+                if (created.ok && Array.isArray(created.data) && created.data[0]) {
+                    item.id_program = Number(created.data[0].id_program);
+                    syncInfo.mode = 'connected';
+                }
+            }
+
+            state.program.unshift(item);
+            saveState();
+            e.target.reset();
+            setDefaultDates();
+            renderAllViews();
+            showToast('Program & bantuan tersimpan.');
+        }
+
+        async function handleSubmitBerita(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const nextId = state.berita.reduce((m, x) => Math.max(m, Number(x.id_berita) || 0), 0) + 1;
+            const distVal = fd.get('id_distrik');
+            const item = {
+                id_berita: nextId,
+                judul: String(fd.get('judul') || '').trim(),
+                kategori: String(fd.get('kategori') || 'Kegiatan Lapangan'),
+                id_distrik: distVal ? Number(distVal) : 1,
+                tanggal_kegiatan: String(fd.get('tanggal_kegiatan') || new Date().toISOString().slice(0, 10)),
+                status_publikasi: String(fd.get('status_publikasi') || 'Terbit'),
+                ringkasan: String(fd.get('ringkasan') || '').trim(),
+                isi_berita: String(fd.get('isi_berita') || '').trim()
+            };
+
+            if (isSupabaseReady()) {
+                const created = await restRequest('berita_kegiatan', { method: 'POST', body: item });
+                if (created.ok && Array.isArray(created.data) && created.data[0]) {
+                    item.id_berita = Number(created.data[0].id_berita);
+                    syncInfo.mode = 'connected';
+                }
+            }
+
+            state.berita.unshift(item);
+            saveState();
+            e.target.reset();
+            closeModal('modal-berita');
+            renderAllViews();
+            showToast('Berita kegiatan tersimpan.');
+        }
+
+        async function handleSubmitPengurus(e) {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const nextId = state.pengurus.reduce((m, x) => Math.max(m, Number(x.id_pengurus) || 0), 0) + 1;
+            const distVal = fd.get('id_distrik');
+            const item = {
+                id_pengurus: nextId,
+                tingkatan: String(fd.get('tingkatan') || 'DPC'),
+                nama_lengkap: String(fd.get('nama_lengkap') || '').trim(),
+                jenis_kelamin: String(fd.get('jenis_kelamin') || 'L'),
+                no_hp_wa: String(fd.get('no_hp_wa') || '').trim(),
+                id_distrik: distVal ? Number(distVal) : null,
+                kampung: String(fd.get('kampung') || '').trim(),
+                jabatan: String(fd.get('jabatan') || '').trim(),
+                bidang: String(fd.get('bidang') || '').trim(),
+                hak_akses: String(fd.get('hak_akses') || 'Operator Lapangan'),
+                sebagai_pengelola: Boolean(fd.get('tetapkan_pengelola'))
+            };
+
+            if (isSupabaseReady()) {
+                const created = await restRequest('pengurus', {
+                    method: 'POST',
+                    body: {
+                        tingkatan: item.tingkatan,
+                        nama_lengkap: item.nama_lengkap,
+                        jenis_kelamin: item.jenis_kelamin,
+                        no_hp_wa: item.no_hp_wa,
+                        id_distrik: item.id_distrik,
+                        kampung: item.kampung || null,
+                        jabatan: item.jabatan,
+                        bidang: item.bidang || null,
+                        hak_akses: item.hak_akses
+                    }
+                });
+                if (created.ok && Array.isArray(created.data) && created.data[0]) {
+                    const pid = Number(created.data[0].id_pengurus);
+                    item.id_pengurus = pid;
+                    if (item.sebagai_pengelola) {
+                        await restRequest('pengelola_data', {
+                            method: 'POST',
+                            body: { id_pengurus: pid, level_pengelolaan: item.hak_akses, cakupan_wilayah: 'Kabupaten Asmat', status_pengelola: 'Aktif' }
+                        });
+                    }
+                    syncInfo.mode = 'connected';
+                }
+            }
+
+            state.pengurus.unshift(item);
+            saveState();
+            e.target.reset();
+            renderPengurusList();
+            showToast('Data pengurus tersimpan.');
+        }
+
+        async function togglePengelolaRole(idPengurus) {
+            let nextVal = false;
+            state.pengurus = state.pengurus.map((p) => {
+                if (Number(p.id_pengurus) === Number(idPengurus)) {
+                    nextVal = !p.sebagai_pengelola;
+                    return Object.assign({}, p, { sebagai_pengelola: nextVal });
+                }
+                return p;
+            });
+
+            if (isSupabaseReady()) {
+                if (nextVal) {
+                    await restRequest('pengelola_data', {
+                        method: 'POST',
+                        body: { id_pengurus: Number(idPengurus), level_pengelolaan: 'Operator Lapangan', cakupan_wilayah: 'Kabupaten Asmat', status_pengelola: 'Aktif' }
+                    });
+                } else {
+                    await restRequest('pengelola_data', { method: 'DELETE', query: 'id_pengurus=eq.' + Number(idPengurus) });
+                }
+            }
+
+            saveState();
+            renderPengurusList();
+            showToast('Status pengelola data diperbarui.');
+        }
+
+        async function deleteItem(collection, id) {
+            const targetId = Number(id);
+            const tableMap = {
+                kelompok: 'kelompok_usaha',
+                kendala: 'kendala_infrastruktur',
+                program: 'program_bantuan',
+                berita: 'berita_kegiatan',
+                pengurus: 'pengurus'
+            };
+            const pkMap = {
+                kelompok: 'id_kelompok',
+                kendala: 'id_kendala',
+                program: 'id_program',
+                berita: 'id_berita',
+                pengurus: 'id_pengurus'
+            };
+
+            if (isSupabaseReady() && tableMap[collection]) {
+                if (collection === 'kelompok') {
+                    await restRequest('kelompok_komoditas', { method: 'DELETE', query: 'id_kelompok=eq.' + targetId });
+                }
+                if (collection === 'pengurus') {
+                    await restRequest('pengelola_data', { method: 'DELETE', query: 'id_pengurus=eq.' + targetId });
+                }
+                await restRequest(tableMap[collection], { method: 'DELETE', query: pkMap[collection] + '=eq.' + targetId });
+            }
+
+            state[collection] = state[collection].filter((row) => Number(row[pkMap[collection]]) !== targetId);
+            saveState();
+            renderAllViews();
+            showToast('Data dihapus.');
+        }
+
+        async function handleSaveSupabaseSettings(e) {
+            e.preventDefault();
+            const rawUrl = document.getElementById('supabase-url-input')?.value || DEFAULT_PROJECT_URL;
+            const cleanedUrl = sanitizeProjectUrl(rawUrl);
+            const apiKey = String(document.getElementById('supabase-key-input')?.value || '').trim();
+
+            state.supabase = { projectUrl: cleanedUrl, apiKey };
+            saveState();
+            renderKoneksiTab();
+            await testAndSyncSupabase();
+        }
+
+        function exportKelompokCsv() {
+            const headers = ['nama_kelompok', 'jenis_kelompok', 'kode_distrik', 'nama_distrik', 'kampung', 'nama_ketua', 'jumlah_anggota', 'luas_area_hektar', 'status_pendampingan', 'jenis_komoditas', 'perkiraan_hasil', 'satuan'];
+            const lines = state.kelompok.map((k) => {
+                const d = getDistrikById(k.id_distrik);
+                return [
+                    k.nama_kelompok, k.jenis_kelompok, d.kode, d.nama, k.kampung,
+                    k.nama_ketua, k.jumlah_anggota, k.luas_area_hektar, k.status_pendampingan,
+                    k.jenis_komoditas, k.perkiraan_hasil, k.satuan
+                ].map((v) => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',');
+            });
+            const csv = [headers.join(','), ...lines].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'hkti-dpc-asmat-kelompok.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('CSV kelompok diunduh.');
+        }
+
+        function parseCsvLine(line) {
+            const out = [];
+            let cur = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        cur += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (ch === ',' && !inQuotes) {
+                    out.push(cur.trim());
+                    cur = '';
+                } else {
+                    cur += ch;
+                }
+            }
+            out.push(cur.trim());
+            return out;
+        }
+
+        function importKelompokCsv(e) {
+            const file = e.target?.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+                try {
+                    const text = String(evt.target?.result || '');
+                    const rawLines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+                    if (rawLines.length < 2) {
+                        showToast('File CSV kosong atau tidak memiliki baris data.', true);
+                        return;
+                    }
+                    let added = 0;
+                    for (let i = 1; i < rawLines.length; i++) {
+                        const cols = parseCsvLine(rawLines[i]);
+                        if (!cols[0]) continue;
+                        const matchDist = DISTRIK_23.find((d) => d.kode === cols[2] || d.nama.toLowerCase() === String(cols[3] || '').toLowerCase());
+                        const nextId = state.kelompok.reduce((m, x) => Math.max(m, Number(x.id_kelompok) || 0), 0) + 1;
+                        state.kelompok.unshift({
+                            id_kelompok: nextId,
+                            nama_kelompok: cols[0],
+                            jenis_kelompok: cols[1] || 'Kelompok Tani',
+                            id_distrik: matchDist ? matchDist.id : 1,
+                            kampung: cols[4] || 'Kampung Asmat',
+                            nama_ketua: cols[5] || 'Ketua Kelompok',
+                            jumlah_anggota: Number(cols[6] || 10),
+                            luas_area_hektar: Number(cols[7] || 1),
+                            status_pendampingan: cols[8] || 'Terdata',
+                            jenis_komoditas: cols[9] || 'Sagu',
+                            perkiraan_hasil: Number(cols[10] || 0),
+                            satuan: cols[11] || 'Kg'
+                        });
+                        added++;
+                    }
+                    saveState();
+                    renderAllViews();
+                    showToast(added + ' data kelompok diimpor dari CSV.');
+                } catch (err) {
+                    showToast('Format CSV tidak dapat dibaca.', true);
+                } finally {
+                    e.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function copySqlScript() {
+            copyText(SQL_SCHEMA, 'Skrip SQL HKTI DPC Asmat disalin.');
+        }
+
+        function resetToDefaultData() {
+            const savedSupa = {
+                projectUrl: sanitizeProjectUrl(state?.supabase?.projectUrl),
+                apiKey: state?.supabase?.apiKey || ''
+            };
+            state = createDefaultState();
+            state.supabase = savedSupa;
+            saveState();
+            renderAllViews();
+            showToast('Data bawaan lokal dipulihkan.');
+        }
+
+        function openBeritaModal() {
+            setDefaultDates();
+            document.getElementById('modal-berita')?.classList.add('open');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id)?.classList.remove('open');
+        }
+
+        function handleModalBackdrop(e, id) {
+            if (e.target?.id === id) closeModal(id);
+        }
+
+        function setDefaultDates() {
+            const today = new Date().toISOString().slice(0, 10);
+            const pDate = document.getElementById('input-tanggal-program');
+            const bDate = document.getElementById('input-tanggal-berita');
+            if (pDate && !pDate.value) pDate.value = today;
+            if (bDate && !bDate.value) bDate.value = today;
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            state = loadState();
+            populateDistrictDropdowns();
+            setDefaultDates();
+            applyLogoDisplay();
+            renderAllViews();
+            if (isSupabaseReady()) {
+                await testAndSyncSupabase();
+            }
+        });
+    </script>
+</body>
+</html>
+```
