@@ -631,7 +631,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Jabatan *</label>
-                                <input type="text" name="jabatan" required placeholder="Ketua / Sekretaris / Bendahara..." class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                                <input type="text" name="jabatan" required placeholder="Ketua, Wakil Ketua, Sekretaris, Bendahara, Anggota..." class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Bidang</label>
@@ -641,7 +641,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Periode SK</label>
-                                <input type="text" name="periode_sk" value="2025-2030" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                                <input type="text" name="periode_sk" value="2026 - 2031" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Status</label>
@@ -669,15 +669,23 @@
                 <div id="pengurus-list-wrapper" class="lg:col-span-12 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Struktur Organisasi</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Struktur Organisasi • Urut Jabatan</span>
                             <h2 class="font-display text-lg font-bold text-slate-900">Daftar Pengurus DPC, PAC &amp; DPRT</h2>
                         </div>
-                        <select id="filter-tingkatan-pengurus" onchange="renderPengurusList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
-                            <option value="SEMUA">Semua Tingkatan</option>
-                            <option value="DPC">DPC</option>
-                            <option value="PAC">PAC</option>
-                            <option value="DPRT">DPRT</option>
-                        </select>
+                        <div class="flex flex-wrap gap-2">
+                            <select id="filter-tingkatan-pengurus" onchange="renderPengurusList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                                <option value="SEMUA">Semua Tingkatan</option>
+                                <option value="DPC">DPC</option>
+                                <option value="PAC">PAC</option>
+                                <option value="DPRT">DPRT</option>
+                            </select>
+                            <select id="filter-distrik-pengurus" onchange="renderPengurusList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                                <option value="SEMUA">Semua 23 Distrik</option>
+                            </select>
+                            <select id="filter-kampung-pengurus" onchange="renderPengurusList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                                <option value="SEMUA">Semua Kampung</option>
+                            </select>
+                        </div>
                     </div>
                     <div id="pengurus-list" class="space-y-3"></div>
                 </div>
@@ -1227,9 +1235,9 @@ END $$;`;
                         email: 'andri.east@gmail.com',
                         id_distrik: 1,
                         kampung: 'Agats',
-                        jabatan: 'Wakil Sekretaris DPC',
+                        jabatan: 'Sekretaris',
                         bidang: 'Organisasi & Pendataan',
-                        periode_sk: '2025-2030',
+                        periode_sk: '2026 - 2031',
                         status_kepengurusan: 'Aktif',
                         hak_akses: 'Admin Penuh'
                     }
@@ -1245,6 +1253,25 @@ END $$;`;
             lastSync: '',
             detail: 'Siap menjalankan pengecekan koneksi & sinkronisasi.'
         };
+
+        function getJabatanRank(jabatan) {
+            const j = String(jabatan || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!j) return 99;
+            if (/\bwakil\s+ketua\b|\bwaket\b|\bwk\b/.test(j)) return 2;
+            if (/\bketua\b/.test(j)) return 1;
+            if (/\bwakil\s+sekretaris\b|\bwasek\b|\bsekretaris\b/.test(j)) return 3;
+            if (/\bwakil\s+bendahara\b|\bwabend\b|\bbendahara\b/.test(j)) return 4;
+            if (/\banggota\b/.test(j)) return 5;
+            return 6;
+        }
+
+        function comparePengurusByJabatan(a, b) {
+            const rankDiff = getJabatanRank(a?.jabatan) - getJabatanRank(b?.jabatan);
+            if (rankDiff !== 0) return rankDiff;
+            const jabDiff = String(a?.jabatan || '').localeCompare(String(b?.jabatan || ''), 'id', { sensitivity: 'base' });
+            if (jabDiff !== 0) return jabDiff;
+            return String(a?.nama_lengkap || '').localeCompare(String(b?.nama_lengkap || ''), 'id', { sensitivity: 'base' });
+        }
 
         function loadState() {
             try {
@@ -1684,7 +1711,7 @@ END $$;`;
                     kampung: p.kampung || '',
                     jabatan: p.jabatan || '',
                     bidang: p.bidang || '',
-                    periode_sk: p.periode_sk || '2025-2030',
+                    periode_sk: p.periode_sk || '2026 - 2031',
                     status_kepengurusan: p.status_kepengurusan || 'Aktif',
                     hak_akses: p.hak_akses || 'Operator Lapangan'
                 }));
@@ -1872,6 +1899,55 @@ END $$;`;
                 filterKelompok.innerHTML = opts;
                 filterKelompok.value = prevFilter;
             }
+
+            const filterPengurus = document.getElementById('filter-distrik-pengurus');
+            if (filterPengurus) {
+                const prevFilterPengurus = filterPengurus.value || 'SEMUA';
+                let opts = '<option value="SEMUA">Semua 23 Distrik</option><option value="TANPA_DISTRIK">Tanpa Distrik (DPC Umum)</option>';
+                DISTRIK_23.forEach((d) => {
+                    opts += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' ' + d.nama) + '</option>';
+                });
+                filterPengurus.innerHTML = opts;
+                filterPengurus.value = prevFilterPengurus;
+            }
+        }
+
+        function syncKampungPengurusFilter() {
+            const filterKampung = document.getElementById('filter-kampung-pengurus');
+            if (!filterKampung) return;
+
+            const prevKampung = filterKampung.value || 'SEMUA';
+            const kampungMap = new Map();
+            let hasEmptyKampung = false;
+
+            state.pengurus.forEach((p) => {
+                const raw = String(p.kampung || '').trim();
+                if (!raw) {
+                    hasEmptyKampung = true;
+                    return;
+                }
+                const key = raw.toLowerCase();
+                if (!kampungMap.has(key)) {
+                    kampungMap.set(key, raw);
+                }
+            });
+
+            const sortedKampung = Array.from(kampungMap.values()).sort((a, b) => a.localeCompare(b, 'id', { sensitivity: 'base' }));
+
+            let opts = '<option value="SEMUA">Semua Kampung</option>';
+            sortedKampung.forEach((kName) => {
+                opts += '<option value="' + escapeHtml(kName.toLowerCase()) + '">' + escapeHtml(kName) + '</option>';
+            });
+            if (hasEmptyKampung) {
+                opts += '<option value="TANPA_KAMPUNG">Tanpa Kampung</option>';
+            }
+
+            filterKampung.innerHTML = opts;
+
+            const availableValues = ['SEMUA', ...sortedKampung.map((k) => k.toLowerCase())];
+            if (hasEmptyKampung) availableValues.push('TANPA_KAMPUNG');
+
+            filterKampung.value = availableValues.includes(prevKampung) ? prevKampung : 'SEMUA';
         }
 
         function renderDistrikGrid() {
@@ -2076,13 +2152,29 @@ END $$;`;
         }
 
         function renderPengurusList() {
+            syncKampungPengurusFilter();
             const box = document.getElementById('pengurus-list');
             if (!box) return;
             const tingkatan = document.getElementById('filter-tingkatan-pengurus')?.value || 'SEMUA';
-            const rows = state.pengurus.filter((p) => tingkatan === 'SEMUA' || p.tingkatan === tingkatan);
+            const distrik = document.getElementById('filter-distrik-pengurus')?.value || 'SEMUA';
+            const kampung = document.getElementById('filter-kampung-pengurus')?.value || 'SEMUA';
+
+            const rows = state.pengurus
+                .filter((p) => {
+                    const okTingkatan = tingkatan === 'SEMUA' || p.tingkatan === tingkatan;
+                    const okDistrik = distrik === 'SEMUA'
+                        || (distrik === 'TANPA_DISTRIK' && !p.id_distrik)
+                        || (distrik !== 'TANPA_DISTRIK' && Number(p.id_distrik) === Number(distrik));
+                    const pKampung = String(p.kampung || '').trim().toLowerCase();
+                    const okKampung = kampung === 'SEMUA'
+                        || (kampung === 'TANPA_KAMPUNG' && !pKampung)
+                        || (kampung !== 'TANPA_KAMPUNG' && pKampung === kampung);
+                    return okTingkatan && okDistrik && okKampung;
+                })
+                .sort(comparePengurusByJabatan);
 
             if (rows.length === 0) {
-                box.innerHTML = '<div class="p-4 text-center rounded-xl bg-slate-50 text-sm text-slate-500">Belum ada data pengurus pada tingkatan ini.</div>';
+                box.innerHTML = '<div class="p-4 text-center rounded-xl bg-slate-50 text-sm text-slate-500">Belum ada data pengurus pada filter ini.</div>';
                 return;
             }
 
@@ -2097,7 +2189,7 @@ END $$;`;
                                 '<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">' + escapeHtml(p.status_kepengurusan) + '</span>' +
                             '</div>' +
                             '<div class="font-display font-bold text-sm sm:text-base text-slate-900">' + escapeHtml(p.nama_lengkap) + ' <span class="text-xs font-normal text-slate-500">(' + escapeHtml(p.jenis_kelamin) + ')</span></div>' +
-                            '<div class="text-xs text-slate-500">WA: ' + escapeHtml(p.no_hp_wa) + (d ? ' • ' + escapeHtml(d.nama) : '') + (p.kampung ? ' • ' + escapeHtml(p.kampung) : '') + ' • SK: ' + escapeHtml(p.periode_sk || '-') + ' • Akses: ' + escapeHtml(p.hak_akses) + '</div>' +
+                            '<div class="text-xs text-slate-500">WA: ' + escapeHtml(p.no_hp_wa) + (d ? ' • ' + escapeHtml(d.kode + ' ' + d.nama) : ' • Tanpa Distrik') + (p.kampung ? ' • ' + escapeHtml(p.kampung) : '') + ' • SK: ' + escapeHtml(p.periode_sk || '-') + ' • Akses: ' + escapeHtml(p.hak_akses) + '</div>' +
                         '</div>' +
                         '<div class="manager-only flex items-center gap-1.5">' +
                             '<button type="button" onclick="startEditPengurus(' + p.id_pengurus + ')" class="touch-target px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold cursor-pointer"><i class="ph-bold ph-pencil-simple"></i></button>' +
@@ -2516,7 +2608,7 @@ END $$;`;
             form.kampung.value = item.kampung || '';
             form.jabatan.value = item.jabatan;
             form.bidang.value = item.bidang || '';
-            form.periode_sk.value = item.periode_sk || '2025-2030';
+            form.periode_sk.value = item.periode_sk || '2026 - 2031';
             form.status_kepengurusan.value = item.status_kepengurusan || 'Aktif';
             form.hak_akses.value = item.hak_akses || 'Operator Lapangan';
             document.getElementById('form-pengurus-title').textContent = 'Edit Pengurus';
@@ -2553,7 +2645,7 @@ END $$;`;
                 kampung: String(fd.get('kampung') || '').trim() || null,
                 jabatan: String(fd.get('jabatan') || '').trim(),
                 bidang: String(fd.get('bidang') || '').trim() || null,
-                periode_sk: String(fd.get('periode_sk') || '2025-2030').trim(),
+                periode_sk: String(fd.get('periode_sk') || '2026 - 2031').trim(),
                 status_kepengurusan: String(fd.get('status_kepengurusan') || 'Aktif'),
                 hak_akses: String(fd.get('hak_akses') || 'Operator Lapangan')
             };
@@ -2675,7 +2767,8 @@ END $$;`;
             }
             if (source === 'pengurus') {
                 const headers = ['id_pengurus', 'tingkatan', 'nama_lengkap', 'jenis_kelamin', 'no_hp_wa', 'email', 'kode_distrik', 'nama_distrik', 'kampung', 'jabatan', 'bidang', 'periode_sk', 'status_kepengurusan', 'hak_akses'];
-                const lines = state.pengurus.map((p) => {
+                const sortedPengurus = [...state.pengurus].sort(comparePengurusByJabatan);
+                const lines = sortedPengurus.map((p) => {
                     const d = p.id_distrik ? getDistrikById(p.id_distrik) : null;
                     return formatCsvRow([p.id_pengurus, p.tingkatan, p.nama_lengkap, p.jenis_kelamin, p.no_hp_wa, p.email || '', d ? d.kode : '', d ? d.nama : '', p.kampung || '', p.jabatan, p.bidang || '', p.periode_sk || '', p.status_kepengurusan, p.hak_akses]);
                 });
@@ -2865,9 +2958,9 @@ END $$;`;
                                 email: cols[4] || null,
                                 id_distrik: idDist,
                                 kampung: cols[7] || null,
-                                jabatan: cols[8] || 'Pengurus',
+                                jabatan: cols[8] || 'Anggota',
                                 bidang: cols[9] || null,
-                                periode_sk: cols[10] || '2025-2030',
+                                periode_sk: cols[10] || '2026 - 2031',
                                 status_kepengurusan: cols[11] || 'Aktif',
                                 hak_akses: cols[12] || 'Operator Lapangan'
                             };
