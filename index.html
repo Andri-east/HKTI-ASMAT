@@ -14,7 +14,7 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
                         display: ['Plus Jakarta Sans', 'Inter', 'sans-serif']
                     },
                     colors: {
@@ -85,9 +85,6 @@
             border-radius: 9999px;
         }
         body.public-mode .manager-only {
-            display: none !important;
-        }
-        body.manager-mode .public-only {
             display: none !important;
         }
     </style>
@@ -220,7 +217,7 @@
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-amber-950">
             <div class="flex items-center gap-2">
                 <i class="ph-fill ph-lock-key text-amber-600 text-lg shrink-0"></i>
-                <span>Mode Publik (Baca Saja). Pengunjung dapat membaca data &amp; mengekspor CSV; tambah/edit/hapus data khusus pengurus yang sudah login.</span>
+                <span>Mode Publik (Baca Saja). Pengunjung dapat membaca data &amp; mengekspor CSV; tambah/edit/hapus/impor data khusus pengurus yang sudah login.</span>
             </div>
             <button type="button" onclick="openModal('modal-login')" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 cursor-pointer">
                 Masuk sebagai Pengurus
@@ -694,7 +691,7 @@
                     <div class="flex items-center justify-between gap-2">
                         <div>
                             <span class="text-xs font-bold uppercase tracking-wider text-emerald-700">Supabase REST API &amp; Auth</span>
-                            <h2 class="font-display text-lg font-bold text-slate-900">Koneksi Database &amp; Ekspor/Impor</h2>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Koneksi Database &amp; CSV per Sumber</h2>
                         </div>
                         <span id="tab-conn-badge" class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800">
                             Mode Lokal
@@ -731,17 +728,28 @@
                     </form>
 
                     <div class="pt-3 border-t border-slate-200 space-y-2.5">
-                        <div class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Ekspor &amp; Impor CSV Kelompok</div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <button type="button" onclick="exportKelompokCsv()" class="touch-target py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                        <label for="csv-source-select" class="block text-xs font-extrabold uppercase tracking-wider text-slate-700">Unduh &amp; Impor CSV per Sumber Data</label>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <select id="csv-source-select" onchange="updateCsvImportHint()" class="touch-target flex-1 px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-800 focus:border-hkti-primary focus:outline-none">
+                                <option value="kelompok">Kelompok &amp; Komoditas</option>
+                                <option value="kendala">Kendala &amp; Infrastruktur</option>
+                                <option value="program">Program &amp; Bantuan</option>
+                                <option value="berita">Berita Kegiatan</option>
+                                <option value="pengurus">Pengurus &amp; Pengelola</option>
+                                <option value="distrik">23 Distrik (91.18 — Ekspor Saja)</option>
+                            </select>
+                            <button type="button" onclick="exportSelectedCsv()" class="touch-target py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
                                 <i class="ph-bold ph-download-simple text-base"></i>
-                                <span>Ekspor CSV Kelompok</span>
+                                <span>Unduh CSV</span>
                             </button>
-                            <label class="manager-only touch-target py-2.5 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                        </div>
+                        <div class="manager-only space-y-1.5">
+                            <label class="touch-target w-full py-2.5 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer">
                                 <i class="ph-bold ph-upload-simple text-base"></i>
-                                <span>Impor CSV Kelompok</span>
-                                <input type="file" id="csv-import-input" accept=".csv,text/csv" onchange="importKelompokCsv(event)" class="hidden" />
+                                <span id="csv-import-btn-label">Impor CSV Kelompok</span>
+                                <input type="file" id="csv-import-input" accept=".csv,text/csv" onchange="importSelectedCsv(event)" class="hidden" />
                             </label>
+                            <p id="csv-import-schema-hint" class="text-[11px] text-slate-500 leading-relaxed"></p>
                         </div>
                     </div>
 
@@ -1818,6 +1826,15 @@ END $$;`;
             return DISTRIK_23.find((d) => Number(d.id) === Number(id)) || { id: 0, kode: '91.18', nama: 'Kabupaten Asmat', pusat: 'Agats', potensi: '' };
         }
 
+        function resolveDistrikId(codeOrName, fallbackId = 1) {
+            const needle = String(codeOrName || '').trim().toLowerCase();
+            if (!needle) return fallbackId;
+            const found = DISTRIK_23.find(
+                (d) => d.kode.toLowerCase() === needle || d.nama.toLowerCase() === needle || ('distrik ' + d.nama.toLowerCase()) === needle
+            );
+            return found ? found.id : fallbackId;
+        }
+
         function openModal(id) {
             document.getElementById(id)?.classList.add('open');
         }
@@ -2091,6 +2108,41 @@ END $$;`;
             }).join('');
         }
 
+        function updateCsvImportHint() {
+            const source = document.getElementById('csv-source-select')?.value || 'kelompok';
+            const btnLabel = document.getElementById('csv-import-btn-label');
+            const hint = document.getElementById('csv-import-schema-hint');
+            const metaMap = {
+                kelompok: {
+                    btn: 'Impor CSV Kelompok & Komoditas',
+                    hint: 'Kolom: nama_kelompok, kode_distrik, nama_distrik, kampung, komoditas_utama, jumlah_anggota, ketua_kelompok, no_hp_wa, status_aktif'
+                },
+                kendala: {
+                    btn: 'Impor CSV Kendala Infrastruktur',
+                    hint: 'Kolom: kode_distrik, nama_distrik, kategori_kendala, deskripsi, tingkat_urgensi, status_tindak_lanjut'
+                },
+                program: {
+                    btn: 'Impor CSV Program & Bantuan',
+                    hint: 'Kolom: nama_program, sumber_mitra, kode_distrik, nama_distrik, kelompok_penerima, tahun_jadwal, status_penyaluran'
+                },
+                berita: {
+                    btn: 'Impor CSV Berita Kegiatan',
+                    hint: 'Kolom: judul, tanggal, kategori, kode_distrik, nama_distrik, penulis, ringkasan'
+                },
+                pengurus: {
+                    btn: 'Impor CSV Pengurus & Pengelola',
+                    hint: 'Kolom: tingkatan (DPC/PAC/DPRT), nama_lengkap, jenis_kelamin (L/P), no_hp_wa, email, kode_distrik, nama_distrik, kampung, jabatan, bidang, periode_sk, status_kepengurusan, hak_akses'
+                },
+                distrik: {
+                    btn: 'Impor CSV (23 Distrik Bersifat Referensi)',
+                    hint: 'Data 23 distrik bersifat acuan baku (91.18). Gunakan Unduh CSV untuk mengekspor rekap distrik.'
+                }
+            };
+            const cur = metaMap[source] || metaMap.kelompok;
+            if (btnLabel) btnLabel.textContent = cur.btn;
+            if (hint) hint.textContent = cur.hint;
+        }
+
         function renderKoneksiTab() {
             const sqlView = document.getElementById('sql-script-view');
             if (sqlView) sqlView.textContent = SQL_SCHEMA_AND_RLS;
@@ -2099,6 +2151,7 @@ END $$;`;
             const keyIn = document.getElementById('supabase-key-input');
             if (urlIn) urlIn.value = sanitizeProjectUrl(state?.supabase?.projectUrl);
             if (keyIn) keyIn.value = cleanApiKey(state?.supabase?.apiKey || '');
+            updateCsvImportHint();
             applyLogoDisplay();
         }
 
@@ -2570,26 +2623,82 @@ END $$;`;
             await runDiagnosticAndSync();
         }
 
-        function exportKelompokCsv() {
-            const headers = ['nama_kelompok', 'kode_distrik', 'nama_distrik', 'kampung', 'komoditas_utama', 'jumlah_anggota', 'ketua_kelompok', 'no_hp_wa', 'status_aktif'];
-            const lines = state.kelompok.map((k) => {
-                const d = getDistrikById(k.id_distrik);
-                return [
-                    k.nama_kelompok, d.kode, d.nama, k.kampung,
-                    k.komoditas_utama, k.jumlah_anggota, k.ketua_kelompok, k.no_hp_wa, k.status_aktif
-                ].map((v) => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',');
-            });
-            const csv = [headers.join(','), ...lines].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        function formatCsvRow(values) {
+            return values.map((v) => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',');
+        }
+
+        function triggerCsvDownload(csvText, filename, label) {
+            const blob = new Blob(['\uFEFF' + csvText], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'hkti-dpc-asmat-kelompok.csv';
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showToast('CSV kelompok diunduh.');
+            showToast('CSV ' + label + ' diunduh.');
+        }
+
+        function buildSourceCsv(source) {
+            if (source === 'distrik') {
+                const headers = ['id_distrik', 'kode_wilayah', 'nama_distrik', 'pusat_distrik', 'potensi_unggulan', 'jumlah_kelompok'];
+                const lines = DISTRIK_23.map((d) => {
+                    const cnt = state.kelompok.filter((k) => Number(k.id_distrik) === Number(d.id)).length;
+                    return formatCsvRow([d.id, d.kode, d.nama, d.pusat, d.potensi, cnt]);
+                });
+                return { headers, lines, filename: 'hkti-dpc-asmat-23-distrik.csv', label: '23 distrik' };
+            }
+            if (source === 'kendala') {
+                const headers = ['id_kendala', 'kode_distrik', 'nama_distrik', 'kategori_kendala', 'deskripsi', 'tingkat_urgensi', 'status_tindak_lanjut'];
+                const lines = state.kendala.map((r) => {
+                    const d = getDistrikById(r.id_distrik);
+                    return formatCsvRow([r.id_kendala, d.kode, d.nama, r.kategori_kendala, r.deskripsi, r.tingkat_urgensi, r.status_tindak_lanjut]);
+                });
+                return { headers, lines, filename: 'hkti-dpc-asmat-kendala-infrastruktur.csv', label: 'kendala infrastruktur' };
+            }
+            if (source === 'program') {
+                const headers = ['id_program', 'nama_program', 'sumber_mitra', 'kode_distrik', 'nama_distrik', 'kelompok_penerima', 'tahun_jadwal', 'status_penyaluran'];
+                const lines = state.program.map((r) => {
+                    const d = getDistrikById(r.id_distrik);
+                    return formatCsvRow([r.id_program, r.nama_program, r.sumber_mitra, d.kode, d.nama, r.kelompok_penerima, r.tahun_jadwal, r.status_penyaluran]);
+                });
+                return { headers, lines, filename: 'hkti-dpc-asmat-program-bantuan.csv', label: 'program & bantuan' };
+            }
+            if (source === 'berita') {
+                const headers = ['id_berita', 'judul', 'tanggal', 'kategori', 'kode_distrik', 'nama_distrik', 'penulis', 'ringkasan'];
+                const lines = state.berita.map((b) => {
+                    const d = getDistrikById(b.id_distrik);
+                    return formatCsvRow([b.id_berita, b.judul, b.tanggal, b.kategori, d.kode, d.nama, b.penulis, b.ringkasan]);
+                });
+                return { headers, lines, filename: 'hkti-dpc-asmat-berita-kegiatan.csv', label: 'berita kegiatan' };
+            }
+            if (source === 'pengurus') {
+                const headers = ['id_pengurus', 'tingkatan', 'nama_lengkap', 'jenis_kelamin', 'no_hp_wa', 'email', 'kode_distrik', 'nama_distrik', 'kampung', 'jabatan', 'bidang', 'periode_sk', 'status_kepengurusan', 'hak_akses'];
+                const lines = state.pengurus.map((p) => {
+                    const d = p.id_distrik ? getDistrikById(p.id_distrik) : null;
+                    return formatCsvRow([p.id_pengurus, p.tingkatan, p.nama_lengkap, p.jenis_kelamin, p.no_hp_wa, p.email || '', d ? d.kode : '', d ? d.nama : '', p.kampung || '', p.jabatan, p.bidang || '', p.periode_sk || '', p.status_kepengurusan, p.hak_akses]);
+                });
+                return { headers, lines, filename: 'hkti-dpc-asmat-pengurus.csv', label: 'pengurus' };
+            }
+
+            const headers = ['nama_kelompok', 'kode_distrik', 'nama_distrik', 'kampung', 'komoditas_utama', 'jumlah_anggota', 'ketua_kelompok', 'no_hp_wa', 'status_aktif'];
+            const lines = state.kelompok.map((k) => {
+                const d = getDistrikById(k.id_distrik);
+                return formatCsvRow([k.nama_kelompok, d.kode, d.nama, k.kampung, k.komoditas_utama, k.jumlah_anggota, k.ketua_kelompok, k.no_hp_wa, k.status_aktif]);
+            });
+            return { headers, lines, filename: 'hkti-dpc-asmat-kelompok.csv', label: 'kelompok usaha' };
+        }
+
+        function exportSelectedCsv() {
+            const source = document.getElementById('csv-source-select')?.value || 'kelompok';
+            const built = buildSourceCsv(source);
+            triggerCsvDownload([[built.headers.join(',')], ...built.lines].join('\n'), built.filename, built.label);
+        }
+
+        function exportKelompokCsv() {
+            const built = buildSourceCsv('kelompok');
+            triggerCsvDownload([[built.headers.join(',')], ...built.lines].join('\n'), built.filename, built.label);
         }
 
         function parseCsvLine(line) {
@@ -2616,44 +2725,162 @@ END $$;`;
             return out;
         }
 
-        function importKelompokCsv(e) {
+        function stripOptionalLeadingId(cols, firstFieldMustBeText = true) {
+            if (!cols.length) return cols;
+            if (firstFieldMustBeText && /^\d+$/.test(cols[0]) && cols.length >= 4) {
+                return cols.slice(1);
+            }
+            return cols;
+        }
+
+        async function syncImportedRowsToTable(tableName, payloads) {
+            if (!isSupabaseReady() || !payloads.length) return;
+            for (const row of payloads) {
+                await restRequest(tableName, { method: 'POST', body: row });
+            }
+        }
+
+        function importSelectedCsv(e) {
             if (!requireManagerAccess()) {
                 e.target.value = '';
                 return;
             }
+            const source = document.getElementById('csv-source-select')?.value || 'kelompok';
+            if (source === 'distrik') {
+                showToast('Data 23 distrik bersifat acuan baku (91.18).', true);
+                e.target.value = '';
+                return;
+            }
+
             const file = e.target?.files?.[0];
             if (!file) return;
+
             const reader = new FileReader();
-            reader.onload = function (evt) {
+            reader.onload = async function (evt) {
                 try {
-                    const text = String(evt.target?.result || '');
+                    const text = String(evt.target?.result || '').replace(/^\uFEFF/, '');
                     const rawLines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
                     if (rawLines.length < 2) {
                         showToast('File CSV kosong atau tidak valid.', true);
                         return;
                     }
+
                     let added = 0;
-                    for (let i = 1; i < rawLines.length; i++) {
-                        const cols = parseCsvLine(rawLines[i]);
-                        if (!cols[0]) continue;
-                        const matchDist = DISTRIK_23.find((d) => d.kode === cols[1] || d.nama.toLowerCase() === String(cols[2] || '').toLowerCase());
-                        const nextId = state.kelompok.reduce((m, x) => Math.max(m, Number(x.id_kelompok) || 0), 0) + 1;
-                        state.kelompok.unshift({
-                            id_kelompok: nextId,
-                            nama_kelompok: cols[0],
-                            id_distrik: matchDist ? matchDist.id : 1,
-                            kampung: cols[3] || 'Kampung Asmat',
-                            komoditas_utama: cols[4] || 'Sagu',
-                            jumlah_anggota: Number(cols[5] || 10),
-                            ketua_kelompok: cols[6] || 'Ketua Kelompok',
-                            no_hp_wa: cols[7] || '',
-                            status_aktif: cols[8] || 'Aktif'
-                        });
-                        added++;
+                    const supabasePayloads = [];
+
+                    if (source === 'kelompok') {
+                        for (let i = 1; i < rawLines.length; i++) {
+                            const cols = parseCsvLine(rawLines[i]);
+                            if (!cols[0]) continue;
+                            const idDist = resolveDistrikId(cols[1] || cols[2], 1);
+                            const nextId = state.kelompok.reduce((m, x) => Math.max(m, Number(x.id_kelompok) || 0), 0) + 1;
+                            const payload = {
+                                nama_kelompok: cols[0],
+                                id_distrik: idDist,
+                                kampung: cols[3] || 'Kampung Asmat',
+                                komoditas_utama: cols[4] || 'Sagu',
+                                jumlah_anggota: Math.max(1, Number(cols[5] || 10)),
+                                ketua_kelompok: cols[6] || 'Ketua Kelompok',
+                                no_hp_wa: cols[7] || '',
+                                status_aktif: cols[8] || 'Aktif'
+                            };
+                            state.kelompok.unshift(Object.assign({ id_kelompok: nextId }, payload));
+                            supabasePayloads.push(payload);
+                            added++;
+                        }
+                        await syncImportedRowsToTable('kelompok_usaha', supabasePayloads);
+                    } else if (source === 'kendala') {
+                        for (let i = 1; i < rawLines.length; i++) {
+                            const cols = stripOptionalLeadingId(parseCsvLine(rawLines[i]), false);
+                            const idDist = resolveDistrikId(cols[0] || cols[1], 1);
+                            const deskripsi = cols[3] || cols[2] || '';
+                            if (!deskripsi) continue;
+                            const nextId = state.kendala.reduce((m, x) => Math.max(m, Number(x.id_kendala) || 0), 0) + 1;
+                            const payload = {
+                                id_distrik: idDist,
+                                kategori_kendala: cols[2] || 'BBM & Transportasi Air',
+                                deskripsi,
+                                tingkat_urgensi: cols[4] || 'Sedang',
+                                status_tindak_lanjut: cols[5] || 'Terdata'
+                            };
+                            state.kendala.unshift(Object.assign({ id_kendala: nextId }, payload));
+                            supabasePayloads.push(payload);
+                            added++;
+                        }
+                        await syncImportedRowsToTable('kendala_infrastruktur', supabasePayloads);
+                    } else if (source === 'program') {
+                        for (let i = 1; i < rawLines.length; i++) {
+                            const cols = stripOptionalLeadingId(parseCsvLine(rawLines[i]), true);
+                            if (!cols[0]) continue;
+                            const idDist = resolveDistrikId(cols[2] || cols[3], 1);
+                            const nextId = state.program.reduce((m, x) => Math.max(m, Number(x.id_program) || 0), 0) + 1;
+                            const payload = {
+                                nama_program: cols[0],
+                                sumber_mitra: cols[1] || 'HKTI DPC Asmat',
+                                id_distrik: idDist,
+                                kelompok_penerima: cols[4] || 'Kelompok Penerima',
+                                tahun_jadwal: cols[5] || '2026',
+                                status_penyaluran: cols[6] || 'Tersalurkan'
+                            };
+                            state.program.unshift(Object.assign({ id_program: nextId }, payload));
+                            supabasePayloads.push(payload);
+                            added++;
+                        }
+                        await syncImportedRowsToTable('program_bantuan', supabasePayloads);
+                    } else if (source === 'berita') {
+                        for (let i = 1; i < rawLines.length; i++) {
+                            const cols = stripOptionalLeadingId(parseCsvLine(rawLines[i]), true);
+                            if (!cols[0]) continue;
+                            const idDist = resolveDistrikId(cols[3] || cols[4], 1);
+                            const nextId = state.berita.reduce((m, x) => Math.max(m, Number(x.id_berita) || 0), 0) + 1;
+                            const payload = {
+                                judul: cols[0],
+                                tanggal: cols[1] || new Date().toISOString().slice(0, 10),
+                                kategori: cols[2] || 'Kegiatan Lapangan',
+                                id_distrik: idDist,
+                                penulis: cols[5] || 'Sekretariat DPC HKTI Asmat',
+                                ringkasan: cols[6] || cols[0]
+                            };
+                            state.berita.unshift(Object.assign({ id_berita: nextId }, payload));
+                            supabasePayloads.push(payload);
+                            added++;
+                        }
+                        await syncImportedRowsToTable('berita_kegiatan', supabasePayloads);
+                    } else if (source === 'pengurus') {
+                        for (let i = 1; i < rawLines.length; i++) {
+                            const cols = stripOptionalLeadingId(parseCsvLine(rawLines[i]), false);
+                            const tingkatanRaw = String(cols[0] || 'DPC').toUpperCase();
+                            const tingkatan = ['DPC', 'PAC', 'DPRT'].includes(tingkatanRaw) ? tingkatanRaw : 'DPC';
+                            const namaLengkap = cols[1] || '';
+                            if (!namaLengkap) continue;
+                            const jkRaw = String(cols[2] || 'L').toUpperCase();
+                            const jenisKelamin = jkRaw === 'P' ? 'P' : 'L';
+                            const idDist = (cols[5] || cols[6]) ? resolveDistrikId(cols[5] || cols[6], 1) : null;
+                            const nextId = state.pengurus.reduce((m, x) => Math.max(m, Number(x.id_pengurus) || 0), 0) + 1;
+                            const payload = {
+                                tingkatan,
+                                nama_lengkap: namaLengkap,
+                                jenis_kelamin: jenisKelamin,
+                                no_hp_wa: cols[3] || '082349960907',
+                                email: cols[4] || null,
+                                id_distrik: idDist,
+                                kampung: cols[7] || null,
+                                jabatan: cols[8] || 'Pengurus',
+                                bidang: cols[9] || null,
+                                periode_sk: cols[10] || '2025-2030',
+                                status_kepengurusan: cols[11] || 'Aktif',
+                                hak_akses: cols[12] || 'Operator Lapangan'
+                            };
+                            state.pengurus.unshift(Object.assign({ id_pengurus: nextId }, payload));
+                            supabasePayloads.push(payload);
+                            added++;
+                        }
+                        await syncImportedRowsToTable('pengurus', supabasePayloads);
                     }
+
                     saveState();
                     renderAllViews();
-                    showToast(added + ' kelompok diimpor dari CSV.');
+                    showToast(added + ' baris (' + source + ') berhasil diimpor dari CSV.');
                 } catch (err) {
                     showToast('Format CSV gagal dibaca.', true);
                 } finally {
@@ -2661,6 +2888,13 @@ END $$;`;
                 }
             };
             reader.readAsText(file);
+        }
+
+        function importKelompokCsv(e) {
+            const sel = document.getElementById('csv-source-select');
+            if (sel) sel.value = 'kelompok';
+            updateCsvImportHint();
+            importSelectedCsv(e);
         }
 
         function copySqlScript() {
