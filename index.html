@@ -95,6 +95,9 @@
         body.public-mode .manager-only {
             display: none !important;
         }
+        body.manager-mode .public-only {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-slate-50 text-slate-900 public-mode">
@@ -906,6 +909,10 @@
                     </div>
                 </div>
                 <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Tautan / URL Dokumentasi atau Berita (Opsional)</label>
+                    <input type="url" name="url_dokumentasi" placeholder="https://www.mata-publik.net/2026/11/hkti-asmat-dorong-optimalisasi-rantai.html" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                </div>
+                <div>
                     <label class="block font-semibold text-slate-700 mb-1">Ringkasan / Narasi Berita *</label>
                     <textarea name="ringkasan" rows="4" required placeholder="Uraian berita kegiatan lapangan..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none"></textarea>
                 </div>
@@ -940,6 +947,25 @@
                 .replace(/\/rest\/v1\/?$/i, '')
                 .replace(/\/+$/, '');
             return cleaned || DEFAULT_PROJECT_URL;
+        }
+
+        function sanitizeNewsUrl(rawUrl) {
+            const cleaned = String(rawUrl || '').trim();
+            if (!cleaned) return '';
+            if (/^https?:\/\//i.test(cleaned)) return cleaned;
+            return 'https://' + cleaned.replace(/^\/+/, '');
+        }
+
+        function getNewsSourceLabel(rawUrl) {
+            const clean = sanitizeNewsUrl(rawUrl);
+            if (!clean) return 'Baca Sumber';
+            try {
+                const host = new URL(clean).hostname.replace(/^www\./i, '').toLowerCase();
+                if (host.includes('mata-publik.net')) return 'Mata Publik';
+                return host || 'Baca Sumber';
+            } catch (e) {
+                return 'Baca Sumber';
+            }
         }
 
         function getActiveApiKey() {
@@ -1079,13 +1105,22 @@ CREATE TABLE IF NOT EXISTS program_bantuan (
 CREATE TABLE IF NOT EXISTS berita_kegiatan (
     id_berita SERIAL PRIMARY KEY,
     judul VARCHAR(220) NOT NULL,
-    tanggal DATE NOT NULL DEFAULT CURRENT_DATE,
+    tanggal_kegiatan DATE NOT NULL DEFAULT CURRENT_DATE,
     id_distrik INT REFERENCES distrik(id_distrik),
+    kampung_lokasi VARCHAR(100),
     ringkasan TEXT NOT NULL,
+    isi_berita TEXT NOT NULL,
     penulis VARCHAR(120) NOT NULL,
     kategori VARCHAR(60) NOT NULL DEFAULT 'Kegiatan Lapangan',
+    url_dokumentasi TEXT,
+    status_publikasi VARCHAR(40) NOT NULL DEFAULT 'Terbit',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS url_dokumentasi TEXT;
+ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS tanggal_kegiatan DATE DEFAULT CURRENT_DATE;
+ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS isi_berita TEXT;
+ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS status_publikasi VARCHAR(40) DEFAULT 'Terbit';
 
 CREATE TABLE IF NOT EXISTS pengurus (
     id_pengurus SERIAL PRIMARY KEY,
@@ -1229,12 +1264,15 @@ END $$;`;
                 berita: [
                     {
                         id_berita: 1,
-                        judul: 'Konsolidasi Pendataan Kelompok Tani, Peternak & Nelayan 25 Distrik Asmat',
+                        judul: 'HKTI Asmat Dorong Optimalisasi Rantai Pasok Pertanian, Peternakan, Perikanan, dan Pangan Lokal',
                         tanggal: '2026-11-24',
                         id_distrik: 1,
-                        ringkasan: 'HKTI DPC Kabupaten Asmat mengoperasikan sistem manajemen data terpadu berbasis tablet untuk memetakan potensi sagu, perikanan muara, kepiting bakau, dan kendala infrastruktur di 25 distrik.',
-                        penulis: 'Sekretariat DPC HKTI Asmat',
-                        kategori: 'Kegiatan Lapangan'
+                        ringkasan: 'Dorongan penguatan rantai pasok sektor pertanian, peternakan, perikanan, dan pangan lokal di Kabupaten Asmat guna memperkokoh ekonomi kerakyatan serta kemandirian pangan daerah.',
+                        isi_berita: 'Dorongan penguatan rantai pasok sektor pertanian, peternakan, perikanan, dan pangan lokal di Kabupaten Asmat guna memperkokoh ekonomi kerakyatan serta kemandirian pangan daerah.',
+                        penulis: 'Mata Publik',
+                        kategori: 'Kemitraan & Program',
+                        url_dokumentasi: 'https://www.mata-publik.net/2026/11/hkti-asmat-dorong-optimalisasi-rantai.html',
+                        status_publikasi: 'Terbit'
                     }
                 ],
                 pengurus: [
@@ -1723,15 +1761,22 @@ END $$;`;
                 }));
             }
             if (rBerita.ok && Array.isArray(rBerita.data)) {
-                state.berita = rBerita.data.map((b) => ({
-                    id_berita: Number(b.id_berita),
-                    judul: b.judul,
-                    tanggal: b.tanggal || b.tanggal_kegiatan || '',
-                    id_distrik: b.id_distrik ? Number(b.id_distrik) : 1,
-                    ringkasan: b.ringkasan || b.isi_berita || '',
-                    penulis: b.penulis || 'Sekretariat DPC HKTI Asmat',
-                    kategori: b.kategori || 'Kegiatan Lapangan'
-                }));
+                state.berita = rBerita.data.map((b) => {
+                    const ringkasanVal = b.ringkasan || b.isi_berita || '';
+                    const isiVal = b.isi_berita || b.ringkasan || '';
+                    return {
+                        id_berita: Number(b.id_berita),
+                        judul: b.judul,
+                        tanggal: b.tanggal_kegiatan || b.tanggal || '',
+                        id_distrik: b.id_distrik ? Number(b.id_distrik) : 1,
+                        ringkasan: ringkasanVal,
+                        isi_berita: isiVal,
+                        penulis: b.penulis || 'Sekretariat DPC HKTI Asmat',
+                        kategori: b.kategori || 'Kegiatan Lapangan',
+                        url_dokumentasi: sanitizeNewsUrl(b.url_dokumentasi || b.url_berita || ''),
+                        status_publikasi: b.status_publikasi || 'Terbit'
+                    };
+                });
             }
             if (rPengurus.ok && Array.isArray(rPengurus.data)) {
                 state.pengurus = rPengurus.data.map((p) => ({
@@ -2165,6 +2210,15 @@ END $$;`;
             }
             box.innerHTML = state.berita.map((b) => {
                 const d = getDistrikById(b.id_distrik);
+                const safeUrl = sanitizeNewsUrl(b.url_dokumentasi || b.url_berita || '');
+                const sourceLabel = getNewsSourceLabel(safeUrl);
+                const linkHtml = safeUrl
+                    ? '<a href="' + escapeHtml(safeUrl) + '" target="_blank" rel="noopener noreferrer" class="touch-target px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold inline-flex items-center gap-1">' +
+                        '<span>' + escapeHtml(sourceLabel) + '</span>' +
+                        '<i class="ph-bold ph-arrow-square-out text-sm"></i>' +
+                      '</a>'
+                    : '';
+
                 return (
                     '<article class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 flex flex-col justify-between gap-3">' +
                         '<div class="space-y-2">' +
@@ -2174,11 +2228,14 @@ END $$;`;
                             '</div>' +
                             '<h3 class="font-display font-bold text-base text-slate-900 leading-snug">' + escapeHtml(b.judul) + '</h3>' +
                             '<div class="text-xs font-semibold text-hkti-primary">' + escapeHtml(d.kode + ' ' + d.nama) + ' • ' + escapeHtml(b.penulis) + '</div>' +
-                            '<p class="text-xs sm:text-sm text-slate-700 bg-white p-3 rounded-xl border border-slate-200/80 leading-relaxed">' + escapeHtml(b.ringkasan) + '</p>' +
+                            '<p class="text-xs sm:text-sm text-slate-700 bg-white p-3 rounded-xl border border-slate-200/80 leading-relaxed">' + escapeHtml(b.ringkasan || b.isi_berita || '') + '</p>' +
                         '</div>' +
-                        '<div class="manager-only flex justify-end gap-1.5 pt-2 border-t border-slate-200/70">' +
-                            '<button type="button" onclick="startEditBerita(' + b.id_berita + ')" class="touch-target px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-pencil-simple"></i><span>Edit</span></button>' +
-                            '<button type="button" onclick="deleteItem(\'berita\', ' + b.id_berita + ')" class="touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-trash"></i><span>Hapus</span></button>' +
+                        '<div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/70">' +
+                            '<div>' + linkHtml + '</div>' +
+                            '<div class="manager-only flex items-center gap-1.5">' +
+                                '<button type="button" onclick="startEditBerita(' + b.id_berita + ')" class="touch-target px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-pencil-simple"></i><span>Edit</span></button>' +
+                                '<button type="button" onclick="deleteItem(\'berita\', ' + b.id_berita + ')" class="touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-trash"></i><span>Hapus</span></button>' +
+                            '</div>' +
                         '</div>' +
                     '</article>'
                 );
@@ -2253,7 +2310,7 @@ END $$;`;
                 },
                 berita: {
                     btn: 'Impor CSV Berita Kegiatan',
-                    hint: 'Kolom: judul, tanggal, kategori, kode_distrik, nama_distrik, penulis, ringkasan'
+                    hint: 'Kolom: judul, tanggal_kegiatan, kategori, kode_distrik, nama_distrik, penulis, ringkasan, url_dokumentasi'
                 },
                 pengurus: {
                     btn: 'Impor CSV Pengurus & Pengelola',
@@ -2573,7 +2630,8 @@ END $$;`;
             form.id_distrik.value = item.id_distrik || 1;
             form.tanggal.value = item.tanggal || new Date().toISOString().slice(0, 10);
             form.penulis.value = item.penulis || 'Sekretariat DPC HKTI Asmat';
-            form.ringkasan.value = item.ringkasan;
+            if (form.url_dokumentasi) form.url_dokumentasi.value = item.url_dokumentasi || item.url_berita || '';
+            form.ringkasan.value = item.ringkasan || item.isi_berita || '';
             document.getElementById('modal-berita-title').textContent = 'Edit Berita Kegiatan';
             openModal('modal-berita');
         }
@@ -2584,26 +2642,45 @@ END $$;`;
             const fd = new FormData(e.target);
             const editId = Number(fd.get('edit_id') || 0);
             const distVal = fd.get('id_distrik');
-            const payload = {
+            const tanggalVal = String(fd.get('tanggal') || new Date().toISOString().slice(0, 10));
+            const narasiVal = String(fd.get('ringkasan') || '').trim();
+            const urlDocVal = sanitizeNewsUrl(fd.get('url_dokumentasi') || '');
+
+            const localRecord = {
                 judul: String(fd.get('judul') || '').trim(),
                 kategori: String(fd.get('kategori') || 'Kegiatan Lapangan'),
                 id_distrik: distVal ? Number(distVal) : 1,
-                tanggal: String(fd.get('tanggal') || new Date().toISOString().slice(0, 10)),
+                tanggal: tanggalVal,
                 penulis: String(fd.get('penulis') || 'Sekretariat DPC HKTI Asmat').trim(),
-                ringkasan: String(fd.get('ringkasan') || '').trim()
+                ringkasan: narasiVal,
+                isi_berita: narasiVal,
+                url_dokumentasi: urlDocVal,
+                status_publikasi: 'Terbit'
+            };
+
+            const supabasePayload = {
+                judul: localRecord.judul,
+                kategori: localRecord.kategori,
+                id_distrik: localRecord.id_distrik,
+                tanggal_kegiatan: tanggalVal,
+                penulis: localRecord.penulis,
+                ringkasan: narasiVal,
+                isi_berita: narasiVal,
+                url_dokumentasi: urlDocVal || null,
+                status_publikasi: 'Terbit'
             };
 
             if (editId > 0) {
                 if (isSupabaseReady()) {
-                    await restRequest('berita_kegiatan', { method: 'PATCH', query: 'id_berita=eq.' + editId, body: payload });
+                    await restRequest('berita_kegiatan', { method: 'PATCH', query: 'id_berita=eq.' + editId, body: supabasePayload });
                 }
-                state.berita = state.berita.map((b) => Number(b.id_berita) === editId ? Object.assign({}, b, payload) : b);
+                state.berita = state.berita.map((b) => Number(b.id_berita) === editId ? Object.assign({}, b, localRecord) : b);
                 showToast('Berita kegiatan diperbarui.');
             } else {
                 const nextId = state.berita.reduce((m, x) => Math.max(m, Number(x.id_berita) || 0), 0) + 1;
-                const item = Object.assign({ id_berita: nextId }, payload);
+                const item = Object.assign({ id_berita: nextId }, localRecord);
                 if (isSupabaseReady()) {
-                    const created = await restRequest('berita_kegiatan', { method: 'POST', body: payload });
+                    const created = await restRequest('berita_kegiatan', { method: 'POST', body: supabasePayload });
                     if (created.ok && Array.isArray(created.data) && created.data[0]) {
                         item.id_berita = Number(created.data[0].id_berita);
                         syncInfo.mode = 'connected';
@@ -2785,10 +2862,10 @@ END $$;`;
                 return { headers, lines, filename: 'hkti-dpc-asmat-program-bantuan.csv', label: 'program & bantuan' };
             }
             if (source === 'berita') {
-                const headers = ['id_berita', 'judul', 'tanggal', 'kategori', 'kode_distrik', 'nama_distrik', 'penulis', 'ringkasan'];
+                const headers = ['id_berita', 'judul', 'tanggal_kegiatan', 'kategori', 'kode_distrik', 'nama_distrik', 'penulis', 'ringkasan', 'url_dokumentasi'];
                 const lines = state.berita.map((b) => {
                     const d = getDistrikById(b.id_distrik);
-                    return formatCsvRow([b.id_berita, b.judul, b.tanggal, b.kategori, d.kode, d.nama, b.penulis, b.ringkasan]);
+                    return formatCsvRow([b.id_berita, b.judul, b.tanggal, b.kategori, d.kode, d.nama, b.penulis, b.ringkasan, b.url_dokumentasi || b.url_berita || '']);
                 });
                 return { headers, lines, filename: 'hkti-dpc-asmat-berita-kegiatan.csv', label: 'berita kegiatan' };
             }
@@ -2947,17 +3024,34 @@ END $$;`;
                             const cols = stripOptionalLeadingId(parseCsvLine(rawLines[i]), true);
                             if (!cols[0]) continue;
                             const idDist = resolveDistrikId(cols[3] || cols[4], 1);
+                            const tanggalVal = cols[1] || new Date().toISOString().slice(0, 10);
+                            const narasiVal = cols[6] || cols[0];
+                            const urlDocVal = sanitizeNewsUrl(cols[7] || '');
                             const nextId = state.berita.reduce((m, x) => Math.max(m, Number(x.id_berita) || 0), 0) + 1;
-                            const payload = {
+                            const localItem = {
+                                id_berita: nextId,
                                 judul: cols[0],
-                                tanggal: cols[1] || new Date().toISOString().slice(0, 10),
+                                tanggal: tanggalVal,
                                 kategori: cols[2] || 'Kegiatan Lapangan',
                                 id_distrik: idDist,
                                 penulis: cols[5] || 'Sekretariat DPC HKTI Asmat',
-                                ringkasan: cols[6] || cols[0]
+                                ringkasan: narasiVal,
+                                isi_berita: narasiVal,
+                                url_dokumentasi: urlDocVal,
+                                status_publikasi: 'Terbit'
                             };
-                            state.berita.unshift(Object.assign({ id_berita: nextId }, payload));
-                            supabasePayloads.push(payload);
+                            state.berita.unshift(localItem);
+                            supabasePayloads.push({
+                                judul: localItem.judul,
+                                tanggal_kegiatan: tanggalVal,
+                                kategori: localItem.kategori,
+                                id_distrik: idDist,
+                                penulis: localItem.penulis,
+                                ringkasan: narasiVal,
+                                isi_berita: narasiVal,
+                                url_dokumentasi: urlDocVal || null,
+                                status_publikasi: 'Terbit'
+                            });
                             added++;
                         }
                         await syncImportedRowsToTable('berita_kegiatan', supabasePayloads);
