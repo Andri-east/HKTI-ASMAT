@@ -10,6 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script>
+        window.handleCustomLogoError = function () {
+            var svgEl = document.getElementById('hkti-vector-logo');
+            var imgEl = document.getElementById('hkti-custom-logo');
+            if (imgEl) imgEl.classList.add('hidden');
+            if (svgEl) svgEl.classList.remove('hidden');
+        };
+    </script>
+    <script>
         tailwind.config = {
             theme: {
                 extend: {
@@ -127,7 +135,7 @@
                                 <rect x="105" y="0" width="7.5" height="34" fill="#dc2626" />
                             </g>
                         </svg>
-                        <img id="hkti-custom-logo" src="./logo-hkti.jpg" alt="Logo HKTI" class="hidden w-full h-full object-contain rounded-xl" onerror="handleCustomLogoError()" />
+                        <img id="hkti-custom-logo" src="./logo-hkti.jpg" alt="Logo HKTI" class="hidden w-full h-full object-contain rounded-xl" onerror="window.handleCustomLogoError()" />
                     </div>
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-1.5">
@@ -182,7 +190,7 @@
             <nav aria-label="Navigasi Sistem Manajemen Data HKTI DPC Asmat" class="flex items-center gap-2 overflow-x-auto thin-scroll pb-3 pt-1">
                 <button type="button" data-tab="distrik" onclick="switchTab('distrik')" class="nav-tab active touch-target shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 inline-flex items-center gap-2 transition cursor-pointer">
                     <i class="ph-bold ph-map-pin-line text-lg"></i>
-                    <span>23 Distrik</span>
+                    <span>25 Distrik</span>
                 </button>
                 <button type="button" data-tab="kelompok" onclick="switchTab('kelompok')" class="nav-tab touch-target shrink-0 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-100 inline-flex items-center gap-2 transition cursor-pointer">
                     <i class="ph-bold ph-users-three text-lg"></i>
@@ -228,7 +236,7 @@
     <!-- Konten Utama -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6">
 
-        <!-- TAB 1: 23 DISTRIK -->
+        <!-- TAB 1: 25 DISTRIK -->
         <section id="panel-distrik" class="tab-section active space-y-6">
             <div class="rounded-3xl bg-gradient-to-br from-hkti-dark via-hkti-primary to-emerald-700 text-white p-5 sm:p-7 shadow-md">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -238,7 +246,7 @@
                             <span>HIMPUNAN KERUKUNAN TANI INDONESIA • DPC KABUPATEN ASMAT</span>
                         </div>
                         <h2 class="font-display text-2xl sm:text-3xl font-extrabold leading-tight">
-                            Basis Data Operasional Tani, Peternak &amp; Nelayan 23 Distrik Asmat
+                            Basis Data Operasional Tani, Peternak &amp; Nelayan 25 Distrik Asmat
                         </h2>
                         <p class="text-sm sm:text-base text-emerald-50/95 leading-relaxed">
                             Sistem terpadu berbasis tablet &amp; offline-first untuk pendataan kelompok usaha, potensi komoditas unggulan, kendala infrastruktur pesisir &amp; sungai, program bantuan, kegiatan lapangan, serta struktur pengurus DPC/PAC/DPRT.
@@ -298,11 +306,11 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Kode Wilayah 91.18 • Papua Selatan</span>
-                        <h3 class="font-display text-lg sm:text-xl font-bold text-slate-900">23 Distrik Kabupaten Asmat &amp; Potensi Komoditas</h3>
+                        <h3 class="font-display text-lg sm:text-xl font-bold text-slate-900">25 Distrik Kabupaten Asmat &amp; Potensi Komoditas</h3>
                     </div>
                     <input type="text" id="search-distrik" oninput="renderDistrikGrid()" placeholder="Cari distrik atau komoditas..." class="touch-target px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm focus:border-hkti-primary focus:outline-none" />
                 </div>
-                <div id="distrik-23-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+                <div id="distrik-25-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
         </section>
 
@@ -383,7 +391,7 @@
                         <div class="flex flex-wrap gap-2">
                             <input type="text" id="search-kelompok" oninput="renderKelompokList()" placeholder="Cari kelompok / komoditas..." class="touch-target px-3 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm focus:border-hkti-primary focus:outline-none" />
                             <select id="filter-distrik-kelompok" onchange="renderKelompokList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
-                                <option value="SEMUA">Semua 23 Distrik</option>
+                                <option value="SEMUA">Semua 25 Distrik</option>
                             </select>
                         </div>
                     </div>
@@ -680,7 +688,7 @@
                                 <option value="DPRT">DPRT</option>
                             </select>
                             <select id="filter-distrik-pengurus" onchange="renderPengurusList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
-                                <option value="SEMUA">Semua 23 Distrik</option>
+                                <option value="SEMUA">Semua 25 Distrik</option>
                             </select>
                             <select id="filter-kampung-pengurus" onchange="renderPengurusList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
                                 <option value="SEMUA">Semua Kampung</option>
@@ -744,7 +752,7 @@
                                 <option value="program">Program &amp; Bantuan</option>
                                 <option value="berita">Berita Kegiatan</option>
                                 <option value="pengurus">Pengurus &amp; Pengelola</option>
-                                <option value="distrik">23 Distrik (91.18 — Ekspor Saja)</option>
+                                <option value="distrik">25 Distrik (91.18 — Ekspor Saja)</option>
                             </select>
                             <button type="button" onclick="exportSelectedCsv()" class="touch-target py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
                                 <i class="ph-bold ph-download-simple text-base"></i>
@@ -777,7 +785,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
                             <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Skema Database &amp; Keamanan RLS</span>
-                            <h2 class="font-display text-lg font-bold text-slate-900">Skrip SQL Tabel, 23 Distrik &amp; Kebijakan RLS</h2>
+                            <h2 class="font-display text-lg font-bold text-slate-900">Skrip SQL Tabel, 25 Distrik &amp; Kebijakan RLS</h2>
                         </div>
                         <button type="button" onclick="copySqlScript()" class="touch-target px-4 py-2 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
                             <i class="ph-bold ph-copy text-base"></i>
@@ -991,7 +999,7 @@
             return Boolean(url.startsWith('https://') && key.length > 10 && !key.startsWith('sb_secret_'));
         }
 
-        const DISTRIK_23 = [
+        const DISTRIK_25 = [
             { id: 1, kode: '91.18.01', nama: 'Agats', pusat: 'Agats / Bis Agats', potensi: 'Sagu, Perikanan Muara, Hortikultura P2L' },
             { id: 2, kode: '91.18.02', nama: 'Atsj', pusat: 'Atsj', potensi: 'Kepiting Bakau, Udang, Ikan Sungai & Sagu' },
             { id: 3, kode: '91.18.03', nama: 'Sawa Erma', pusat: 'Sawa Erma', potensi: 'Sagu, Perikanan Rawa & Hasil Hutan Non-Kayu' },
@@ -1014,12 +1022,14 @@
             { id: 20, kode: '91.18.20', nama: 'Joutu', pusat: 'Daikot', potensi: 'Sagu, Ikan Sungai & Ternak Unggas Lokal' },
             { id: 21, kode: '91.18.21', nama: 'Aswi', pusat: 'Piramat', potensi: 'Perikanan Pesisir, Udang & Sagu' },
             { id: 22, kode: '91.18.22', nama: 'Awyu', pusat: 'Wagi', potensi: 'Sagu, Hasil Hutan Non-Kayu & Ikan Rawa' },
-            { id: 23, kode: '91.18.23', nama: 'Koroway Buluanop', pusat: 'Mabul', potensi: 'Sagu, Hasil Hutan Non-Kayu & Pangan Lokal' }
+            { id: 23, kode: '91.18.23', nama: 'Koroway Buluanop', pusat: 'Mabul', potensi: 'Sagu, Hasil Hutan Non-Kayu & Pangan Lokal' },
+            { id: 24, kode: '91.18.24', nama: 'Tomor Birip', pusat: 'Tomor Birip', potensi: 'Sagu, Perikanan Sungai & Hasil Hutan Non-Kayu' },
+            { id: 25, kode: '91.18.25', nama: 'Sor Ep', pusat: 'Sor Ep', potensi: 'Sagu, Perikanan Sungai & Pangan Lokal' }
         ];
 
         const SQL_SCHEMA_AND_RLS = `-- ============================================================================
 -- SKRIP SQL SISTEM MANAJEMEN DATA HKTI DPC KABUPATEN ASMAT
--- Mencakup: Skema Tabel, Data 23 Distrik (91.18), & Kebijakan RLS (Auth)
+-- Mencakup: Skema Tabel, Data 25 Distrik (91.18), & Kebijakan RLS (Auth)
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS distrik (
@@ -1117,7 +1127,9 @@ INSERT INTO distrik (kode_wilayah, nama_distrik, pusat_distrik, potensi_unggulan
 ('91.18.20', 'Joutu', 'Daikot', 'Sagu, Ikan Sungai & Ternak Unggas Lokal'),
 ('91.18.21', 'Aswi', 'Piramat', 'Perikanan Pesisir, Udang & Sagu'),
 ('91.18.22', 'Awyu', 'Wagi', 'Sagu, Hasil Hutan Non-Kayu & Ikan Rawa'),
-('91.18.23', 'Koroway Buluanop', 'Mabul', 'Sagu, Hasil Hutan Non-Kayu & Pangan Lokal')
+('91.18.23', 'Koroway Buluanop', 'Mabul', 'Sagu, Hasil Hutan Non-Kayu & Pangan Lokal'),
+('91.18.24', 'Tomor Birip', 'Tomor Birip', 'Sagu, Perikanan Sungai & Hasil Hutan Non-Kayu'),
+('91.18.25', 'Sor Ep', 'Sor Ep', 'Sagu, Perikanan Sungai & Pangan Lokal')
 ON CONFLICT (kode_wilayah) DO NOTHING;
 
 REVOKE INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM anon;
@@ -1217,10 +1229,10 @@ END $$;`;
                 berita: [
                     {
                         id_berita: 1,
-                        judul: 'Konsolidasi Pendataan Kelompok Tani, Peternak & Nelayan 23 Distrik Asmat',
+                        judul: 'Konsolidasi Pendataan Kelompok Tani, Peternak & Nelayan 25 Distrik Asmat',
                         tanggal: '2026-11-24',
                         id_distrik: 1,
-                        ringkasan: 'HKTI DPC Kabupaten Asmat mengoperasikan sistem manajemen data terpadu berbasis tablet untuk memetakan potensi sagu, perikanan muara, kepiting bakau, dan kendala infrastruktur di 23 distrik.',
+                        ringkasan: 'HKTI DPC Kabupaten Asmat mengoperasikan sistem manajemen data terpadu berbasis tablet untuk memetakan potensi sagu, perikanan muara, kepiting bakau, dan kendala infrastruktur di 25 distrik.',
                         penulis: 'Sekretariat DPC HKTI Asmat',
                         kategori: 'Kegiatan Lapangan'
                     }
@@ -1282,7 +1294,7 @@ END $$;`;
                 return {
                     supabase: {
                         projectUrl: sanitizeProjectUrl(parsed?.supabase?.projectUrl || DEFAULT_PROJECT_URL),
-                        apiKey: cleanApiKey(parsed?.supabase?.apiKey || '')
+                        apiKey: cleanApiKey(parsed?.supabase?.apiKey || DEFAULT_ANON_KEY)
                     },
                     customLogoDataUrl: typeof parsed?.customLogoDataUrl === 'string' ? parsed.customLogoDataUrl : '',
                     kelompok: Array.isArray(parsed?.kelompok) ? parsed.kelompok : def.kelompok,
@@ -1646,13 +1658,35 @@ END $$;`;
             }
 
             if (rDistrik.ok && Array.isArray(rDistrik.data) && rDistrik.data.length > 0) {
-                DISTRIK_23.splice(0, DISTRIK_23.length, ...rDistrik.data.map((d) => ({
-                    id: Number(d.id_distrik),
-                    kode: d.kode_wilayah,
-                    nama: d.nama_distrik,
-                    pusat: d.pusat_distrik || d.nama_distrik,
-                    potensi: d.potensi_unggulan || 'Sagu, Perikanan Sungai & Muara'
-                })));
+                const oldById = new Map(DISTRIK_25.map((item) => [Number(item.id), item]));
+                const mappedDistrik = rDistrik.data.map((d, idx) => {
+                    const fallback = DISTRIK_25[idx] || {};
+                    return {
+                        id: Number(d.id_distrik),
+                        kode: d.kode_wilayah,
+                        nama: d.nama_distrik,
+                        pusat: d.pusat_distrik || fallback.pusat || d.nama_distrik,
+                        potensi: d.potensi_unggulan || fallback.potensi || 'Sagu, Perikanan Sungai & Muara'
+                    };
+                });
+                DISTRIK_25.splice(0, DISTRIK_25.length, ...mappedDistrik);
+
+                const remapDistrikId = (rawId) => {
+                    if (!rawId) return rawId;
+                    if (DISTRIK_25.some((x) => Number(x.id) === Number(rawId))) return Number(rawId);
+                    const prev = oldById.get(Number(rawId));
+                    if (prev) {
+                        const match = DISTRIK_25.find((x) => x.kode === prev.kode || x.nama.toLowerCase() === prev.nama.toLowerCase());
+                        if (match) return Number(match.id);
+                    }
+                    return Number(rawId);
+                };
+
+                state.kelompok = state.kelompok.map((k) => Object.assign({}, k, { id_distrik: remapDistrikId(k.id_distrik) }));
+                state.kendala = state.kendala.map((k) => Object.assign({}, k, { id_distrik: remapDistrikId(k.id_distrik) }));
+                state.program = state.program.map((p) => Object.assign({}, p, { id_distrik: remapDistrikId(p.id_distrik) }));
+                state.berita = state.berita.map((b) => Object.assign({}, b, { id_distrik: remapDistrikId(b.id_distrik) }));
+                state.pengurus = state.pengurus.map((p) => Object.assign({}, p, { id_distrik: p.id_distrik ? remapDistrikId(p.id_distrik) : null }));
             }
             if (rKelompok.ok && Array.isArray(rKelompok.data)) {
                 state.kelompok = rKelompok.data.map((k) => ({
@@ -1850,13 +1884,13 @@ END $$;`;
         }
 
         function getDistrikById(id) {
-            return DISTRIK_23.find((d) => Number(d.id) === Number(id)) || { id: 0, kode: '91.18', nama: 'Kabupaten Asmat', pusat: 'Agats', potensi: '' };
+            return DISTRIK_25.find((d) => Number(d.id) === Number(id)) || { id: 0, kode: '91.18', nama: 'Kabupaten Asmat', pusat: 'Agats', potensi: '' };
         }
 
         function resolveDistrikId(codeOrName, fallbackId = 1) {
             const needle = String(codeOrName || '').trim().toLowerCase();
             if (!needle) return fallbackId;
-            const found = DISTRIK_23.find(
+            const found = DISTRIK_25.find(
                 (d) => d.kode.toLowerCase() === needle || d.nama.toLowerCase() === needle || ('distrik ' + d.nama.toLowerCase()) === needle
             );
             return found ? found.id : fallbackId;
@@ -1882,7 +1916,7 @@ END $$;`;
                 const prev = el.value;
                 const optional = id === 'select-distrik-pengurus' || id === 'select-distrik-berita';
                 let html = optional ? '<option value="">-- Pilih Distrik (Opsional) --</option>' : '';
-                DISTRIK_23.forEach((d) => {
+                DISTRIK_25.forEach((d) => {
                     html += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' — ' + d.nama) + '</option>';
                 });
                 el.innerHTML = html;
@@ -1892,8 +1926,8 @@ END $$;`;
             const filterKelompok = document.getElementById('filter-distrik-kelompok');
             if (filterKelompok) {
                 const prevFilter = filterKelompok.value || 'SEMUA';
-                let opts = '<option value="SEMUA">Semua 23 Distrik</option>';
-                DISTRIK_23.forEach((d) => {
+                let opts = '<option value="SEMUA">Semua 25 Distrik</option>';
+                DISTRIK_25.forEach((d) => {
                     opts += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' ' + d.nama) + '</option>';
                 });
                 filterKelompok.innerHTML = opts;
@@ -1903,8 +1937,8 @@ END $$;`;
             const filterPengurus = document.getElementById('filter-distrik-pengurus');
             if (filterPengurus) {
                 const prevFilterPengurus = filterPengurus.value || 'SEMUA';
-                let opts = '<option value="SEMUA">Semua 23 Distrik</option><option value="TANPA_DISTRIK">Tanpa Distrik (DPC Umum)</option>';
-                DISTRIK_23.forEach((d) => {
+                let opts = '<option value="SEMUA">Semua 25 Distrik</option><option value="TANPA_DISTRIK">Tanpa Distrik (DPC Umum)</option>';
+                DISTRIK_25.forEach((d) => {
                     opts += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' ' + d.nama) + '</option>';
                 });
                 filterPengurus.innerHTML = opts;
@@ -1955,7 +1989,7 @@ END $$;`;
             if (kpi) {
                 const totalAnggota = state.kelompok.reduce((acc, k) => acc + (Number(k.jumlah_anggota) || 0), 0);
                 const cards = [
-                    { title: 'Wilayah Distrik', val: '23', sub: 'Kode 91.18.01 – 91.18.23', icon: 'ph-map-pin-line', tone: 'bg-emerald-100 text-emerald-800' },
+                    { title: 'Wilayah Distrik', val: String(DISTRIK_25.length), sub: 'Kode 91.18.01 – 91.18.25', icon: 'ph-map-pin-line', tone: 'bg-emerald-100 text-emerald-800' },
                     { title: 'Kelompok Usaha', val: state.kelompok.length, sub: totalAnggota + ' anggota terdata', icon: 'ph-users-three', tone: 'bg-hkti-pale text-hkti-dark' },
                     { title: 'Kendala Infrastruktur', val: state.kendala.length, sub: 'BBM, cold storage & sinyal', icon: 'ph-boat', tone: 'bg-amber-100 text-amber-800' },
                     { title: 'Program & Berita', val: state.program.length + ' / ' + state.berita.length, sub: 'Program bantuan & berita', icon: 'ph-package', tone: 'bg-sky-100 text-sky-800' }
@@ -1972,11 +2006,11 @@ END $$;`;
                 )).join('');
             }
 
-            const grid = document.getElementById('distrik-23-grid');
+            const grid = document.getElementById('distrik-25-grid');
             if (!grid) return;
             const q = String(document.getElementById('search-distrik')?.value || '').trim().toLowerCase();
 
-            const filtered = DISTRIK_23.filter((d) => {
+            const filtered = DISTRIK_25.filter((d) => {
                 if (!q) return true;
                 return d.nama.toLowerCase().includes(q) || d.kode.toLowerCase().includes(q) || d.pusat.toLowerCase().includes(q) || d.potensi.toLowerCase().includes(q);
             });
@@ -2226,8 +2260,8 @@ END $$;`;
                     hint: 'Kolom: tingkatan (DPC/PAC/DPRT), nama_lengkap, jenis_kelamin (L/P), no_hp_wa, email, kode_distrik, nama_distrik, kampung, jabatan, bidang, periode_sk, status_kepengurusan, hak_akses'
                 },
                 distrik: {
-                    btn: 'Impor CSV (23 Distrik Bersifat Referensi)',
-                    hint: 'Data 23 distrik bersifat acuan baku (91.18). Gunakan Unduh CSV untuk mengekspor rekap distrik.'
+                    btn: 'Impor CSV (25 Distrik Bersifat Referensi)',
+                    hint: 'Data 25 distrik bersifat acuan baku (91.18). Gunakan Unduh CSV untuk mengekspor rekap distrik.'
                 }
             };
             const cur = metaMap[source] || metaMap.kelompok;
@@ -2262,13 +2296,6 @@ END $$;`;
             }
         }
 
-        function handleCustomLogoError() {
-            const svgEl = document.getElementById('hkti-vector-logo');
-            const imgEl = document.getElementById('hkti-custom-logo');
-            if (imgEl) imgEl.classList.add('hidden');
-            if (svgEl) svgEl.classList.remove('hidden');
-        }
-
         function handleLogoUpload(e) {
             if (!requireManagerAccess()) return;
             const file = e.target?.files?.[0];
@@ -2293,15 +2320,15 @@ END $$;`;
         }
 
         function renderAllViews() {
-            applyAuthUiMode();
-            renderDistrikGrid();
-            renderKelompokList();
-            renderKendalaList();
-            renderProgramList();
-            renderBeritaList();
-            renderPengurusList();
-            renderKoneksiTab();
-            updateConnectionUi();
+            try { applyAuthUiMode(); } catch (e) {}
+            try { renderDistrikGrid(); } catch (e) {}
+            try { renderKelompokList(); } catch (e) {}
+            try { renderKendalaList(); } catch (e) {}
+            try { renderProgramList(); } catch (e) {}
+            try { renderBeritaList(); } catch (e) {}
+            try { renderPengurusList(); } catch (e) {}
+            try { renderKoneksiTab(); } catch (e) {}
+            try { updateConnectionUi(); } catch (e) {}
         }
 
         function resetAllEditForms() {
@@ -2735,11 +2762,11 @@ END $$;`;
         function buildSourceCsv(source) {
             if (source === 'distrik') {
                 const headers = ['id_distrik', 'kode_wilayah', 'nama_distrik', 'pusat_distrik', 'potensi_unggulan', 'jumlah_kelompok'];
-                const lines = DISTRIK_23.map((d) => {
+                const lines = DISTRIK_25.map((d) => {
                     const cnt = state.kelompok.filter((k) => Number(k.id_distrik) === Number(d.id)).length;
                     return formatCsvRow([d.id, d.kode, d.nama, d.pusat, d.potensi, cnt]);
                 });
-                return { headers, lines, filename: 'hkti-dpc-asmat-23-distrik.csv', label: '23 distrik' };
+                return { headers, lines, filename: 'hkti-dpc-asmat-25-distrik.csv', label: '25 distrik' };
             }
             if (source === 'kendala') {
                 const headers = ['id_kendala', 'kode_distrik', 'nama_distrik', 'kategori_kendala', 'deskripsi', 'tingkat_urgensi', 'status_tindak_lanjut'];
@@ -2789,11 +2816,6 @@ END $$;`;
             triggerCsvDownload([[built.headers.join(',')], ...built.lines].join('\n'), built.filename, built.label);
         }
 
-        function exportKelompokCsv() {
-            const built = buildSourceCsv('kelompok');
-            triggerCsvDownload([[built.headers.join(',')], ...built.lines].join('\n'), built.filename, built.label);
-        }
-
         function parseCsvLine(line) {
             const out = [];
             let cur = '';
@@ -2840,7 +2862,7 @@ END $$;`;
             }
             const source = document.getElementById('csv-source-select')?.value || 'kelompok';
             if (source === 'distrik') {
-                showToast('Data 23 distrik bersifat acuan baku (91.18).', true);
+                showToast('Data 25 distrik bersifat acuan baku (91.18).', true);
                 e.target.value = '';
                 return;
             }
@@ -2983,13 +3005,6 @@ END $$;`;
             reader.readAsText(file);
         }
 
-        function importKelompokCsv(e) {
-            const sel = document.getElementById('csv-source-select');
-            if (sel) sel.value = 'kelompok';
-            updateCsvImportHint();
-            importSelectedCsv(e);
-        }
-
         function copySqlScript() {
             copyText(SQL_SCHEMA_AND_RLS, 'Skrip SQL & kebijakan RLS HKTI DPC Asmat disalin.');
         }
@@ -2997,8 +3012,8 @@ END $$;`;
         document.addEventListener('DOMContentLoaded', async function () {
             state = loadState();
             authSession = loadAuthSession();
-            populateDistrictDropdowns();
-            applyLogoDisplay();
+            try { populateDistrictDropdowns(); } catch (e) {}
+            try { applyLogoDisplay(); } catch (e) {}
             renderAllViews();
             if (isSupabaseReady()) {
                 await runDiagnosticAndSync();
