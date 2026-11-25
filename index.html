@@ -904,8 +904,8 @@
                         <input type="date" id="input-tanggal-berita" name="tanggal" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
                     </div>
                     <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Penulis / Kontributor *</label>
-                        <input type="text" name="penulis" required value="Sekretariat DPC HKTI Asmat" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                        <label class="block font-semibold text-slate-700 mb-1">Penulis / Kontributor (Tampilan)</label>
+                        <input type="text" name="penulis" value="Sekretariat DPC HKTI Asmat" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
                     </div>
                 </div>
                 <div>
@@ -1105,19 +1105,21 @@ CREATE TABLE IF NOT EXISTS program_bantuan (
 CREATE TABLE IF NOT EXISTS berita_kegiatan (
     id_berita SERIAL PRIMARY KEY,
     judul VARCHAR(220) NOT NULL,
-    tanggal_kegiatan DATE NOT NULL DEFAULT CURRENT_DATE,
+    kategori VARCHAR(60) NOT NULL DEFAULT 'Kegiatan Lapangan',
     id_distrik INT REFERENCES distrik(id_distrik),
     kampung_lokasi VARCHAR(100),
+    tanggal_kegiatan DATE DEFAULT CURRENT_DATE,
     ringkasan TEXT NOT NULL,
     isi_berita TEXT NOT NULL,
-    penulis VARCHAR(120) NOT NULL,
-    kategori VARCHAR(60) NOT NULL DEFAULT 'Kegiatan Lapangan',
     url_dokumentasi TEXT,
     status_publikasi VARCHAR(40) NOT NULL DEFAULT 'Terbit',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    penulis_id INT,
+    dibuat_pada TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    url_berita TEXT
 );
 
 ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS url_dokumentasi TEXT;
+ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS url_berita TEXT;
 ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS tanggal_kegiatan DATE DEFAULT CURRENT_DATE;
 ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS isi_berita TEXT;
 ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS status_publikasi VARCHAR(40) DEFAULT 'Terbit';
@@ -1272,6 +1274,7 @@ END $$;`;
                         penulis: 'Mata Publik',
                         kategori: 'Kemitraan & Program',
                         url_dokumentasi: 'https://www.mata-publik.net/2026/11/hkti-asmat-dorong-optimalisasi-rantai.html',
+                        url_berita: 'https://www.mata-publik.net/2026/11/hkti-asmat-dorong-optimalisasi-rantai.html',
                         status_publikasi: 'Terbit'
                     }
                 ],
@@ -1761,9 +1764,12 @@ END $$;`;
                 }));
             }
             if (rBerita.ok && Array.isArray(rBerita.data)) {
+                const localById = new Map(state.berita.map((item) => [Number(item.id_berita), item]));
                 state.berita = rBerita.data.map((b) => {
+                    const prev = localById.get(Number(b.id_berita));
                     const ringkasanVal = b.ringkasan || b.isi_berita || '';
                     const isiVal = b.isi_berita || b.ringkasan || '';
+                    const urlVal = sanitizeNewsUrl(b.url_dokumentasi || b.url_berita || '');
                     return {
                         id_berita: Number(b.id_berita),
                         judul: b.judul,
@@ -1771,9 +1777,10 @@ END $$;`;
                         id_distrik: b.id_distrik ? Number(b.id_distrik) : 1,
                         ringkasan: ringkasanVal,
                         isi_berita: isiVal,
-                        penulis: b.penulis || 'Sekretariat DPC HKTI Asmat',
+                        penulis: prev?.penulis || 'Sekretariat DPC HKTI Asmat',
                         kategori: b.kategori || 'Kegiatan Lapangan',
-                        url_dokumentasi: sanitizeNewsUrl(b.url_dokumentasi || b.url_berita || ''),
+                        url_dokumentasi: urlVal,
+                        url_berita: urlVal,
                         status_publikasi: b.status_publikasi || 'Terbit'
                     };
                 });
@@ -1889,7 +1896,7 @@ END $$;`;
             toastTimeout = setTimeout(() => {
                 banner.classList.remove('opacity-100', 'translate-y-0');
                 banner.classList.add('opacity-0', 'translate-y-3');
-            }, 3000);
+            }, 3500);
         }
 
         function copyText(value, successMsg) {
@@ -2227,7 +2234,7 @@ END $$;`;
                                 '<span class="text-slate-500 font-medium">' + escapeHtml(b.tanggal || '-') + '</span>' +
                             '</div>' +
                             '<h3 class="font-display font-bold text-base text-slate-900 leading-snug">' + escapeHtml(b.judul) + '</h3>' +
-                            '<div class="text-xs font-semibold text-hkti-primary">' + escapeHtml(d.kode + ' ' + d.nama) + ' • ' + escapeHtml(b.penulis) + '</div>' +
+                            '<div class="text-xs font-semibold text-hkti-primary">' + escapeHtml(d.kode + ' ' + d.nama) + (b.penulis ? ' • ' + escapeHtml(b.penulis) : '') + '</div>' +
                             '<p class="text-xs sm:text-sm text-slate-700 bg-white p-3 rounded-xl border border-slate-200/80 leading-relaxed">' + escapeHtml(b.ringkasan || b.isi_berita || '') + '</p>' +
                         '</div>' +
                         '<div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/70">' +
@@ -2446,7 +2453,11 @@ END $$;`;
 
             if (editId > 0) {
                 if (isSupabaseReady()) {
-                    await restRequest('kelompok_usaha', { method: 'PATCH', query: 'id_kelompok=eq.' + editId, body: payload });
+                    const updated = await restRequest('kelompok_usaha', { method: 'PATCH', query: 'id_kelompok=eq.' + editId, body: payload });
+                    if (!updated.ok) {
+                        showToast('Gagal perbarui di Supabase: ' + (updated.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
                 }
                 state.kelompok = state.kelompok.map((k) => Number(k.id_kelompok) === editId ? Object.assign({}, k, payload) : k);
                 showToast('Data kelompok usaha diperbarui.');
@@ -2455,8 +2466,12 @@ END $$;`;
                 const item = Object.assign({ id_kelompok: nextId }, payload);
                 if (isSupabaseReady()) {
                     const created = await restRequest('kelompok_usaha', { method: 'POST', body: payload });
-                    if (created.ok && Array.isArray(created.data) && created.data[0]) {
-                        item.id_kelompok = Number(created.data[0].id_kelompok);
+                    if (!created.ok) {
+                        showToast('Gagal simpan ke Supabase: ' + (created.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
+                    if (Array.isArray(created.data) && created.data[0]) {
+                        item.id_kelompok = Number(created.data[0].id_kelompok || nextId);
                         syncInfo.mode = 'connected';
                     }
                 }
@@ -2514,7 +2529,11 @@ END $$;`;
 
             if (editId > 0) {
                 if (isSupabaseReady()) {
-                    await restRequest('kendala_infrastruktur', { method: 'PATCH', query: 'id_kendala=eq.' + editId, body: payload });
+                    const updated = await restRequest('kendala_infrastruktur', { method: 'PATCH', query: 'id_kendala=eq.' + editId, body: payload });
+                    if (!updated.ok) {
+                        showToast('Gagal perbarui di Supabase: ' + (updated.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
                 }
                 state.kendala = state.kendala.map((k) => Number(k.id_kendala) === editId ? Object.assign({}, k, payload) : k);
                 showToast('Kendala infrastruktur diperbarui.');
@@ -2523,8 +2542,12 @@ END $$;`;
                 const item = Object.assign({ id_kendala: nextId }, payload);
                 if (isSupabaseReady()) {
                     const created = await restRequest('kendala_infrastruktur', { method: 'POST', body: payload });
-                    if (created.ok && Array.isArray(created.data) && created.data[0]) {
-                        item.id_kendala = Number(created.data[0].id_kendala);
+                    if (!created.ok) {
+                        showToast('Gagal simpan ke Supabase: ' + (created.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
+                    if (Array.isArray(created.data) && created.data[0]) {
+                        item.id_kendala = Number(created.data[0].id_kendala || nextId);
                         syncInfo.mode = 'connected';
                     }
                 }
@@ -2584,7 +2607,11 @@ END $$;`;
 
             if (editId > 0) {
                 if (isSupabaseReady()) {
-                    await restRequest('program_bantuan', { method: 'PATCH', query: 'id_program=eq.' + editId, body: payload });
+                    const updated = await restRequest('program_bantuan', { method: 'PATCH', query: 'id_program=eq.' + editId, body: payload });
+                    if (!updated.ok) {
+                        showToast('Gagal perbarui di Supabase: ' + (updated.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
                 }
                 state.program = state.program.map((p) => Number(p.id_program) === editId ? Object.assign({}, p, payload) : p);
                 showToast('Program & bantuan diperbarui.');
@@ -2593,8 +2620,12 @@ END $$;`;
                 const item = Object.assign({ id_program: nextId }, payload);
                 if (isSupabaseReady()) {
                     const created = await restRequest('program_bantuan', { method: 'POST', body: payload });
-                    if (created.ok && Array.isArray(created.data) && created.data[0]) {
-                        item.id_program = Number(created.data[0].id_program);
+                    if (!created.ok) {
+                        showToast('Gagal simpan ke Supabase: ' + (created.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
+                    if (Array.isArray(created.data) && created.data[0]) {
+                        item.id_program = Number(created.data[0].id_program || nextId);
                         syncInfo.mode = 'connected';
                     }
                 }
@@ -2655,6 +2686,7 @@ END $$;`;
                 ringkasan: narasiVal,
                 isi_berita: narasiVal,
                 url_dokumentasi: urlDocVal,
+                url_berita: urlDocVal,
                 status_publikasi: 'Terbit'
             };
 
@@ -2663,16 +2695,24 @@ END $$;`;
                 kategori: localRecord.kategori,
                 id_distrik: localRecord.id_distrik,
                 tanggal_kegiatan: tanggalVal,
-                penulis: localRecord.penulis,
                 ringkasan: narasiVal,
                 isi_berita: narasiVal,
                 url_dokumentasi: urlDocVal || null,
+                url_berita: urlDocVal || null,
                 status_publikasi: 'Terbit'
             };
 
             if (editId > 0) {
                 if (isSupabaseReady()) {
-                    await restRequest('berita_kegiatan', { method: 'PATCH', query: 'id_berita=eq.' + editId, body: supabasePayload });
+                    const updated = await restRequest('berita_kegiatan', {
+                        method: 'PATCH',
+                        query: 'id_berita=eq.' + editId,
+                        body: supabasePayload
+                    });
+                    if (!updated.ok) {
+                        showToast('Gagal perbarui di Supabase: ' + (updated.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
                 }
                 state.berita = state.berita.map((b) => Number(b.id_berita) === editId ? Object.assign({}, b, localRecord) : b);
                 showToast('Berita kegiatan diperbarui.');
@@ -2680,9 +2720,16 @@ END $$;`;
                 const nextId = state.berita.reduce((m, x) => Math.max(m, Number(x.id_berita) || 0), 0) + 1;
                 const item = Object.assign({ id_berita: nextId }, localRecord);
                 if (isSupabaseReady()) {
-                    const created = await restRequest('berita_kegiatan', { method: 'POST', body: supabasePayload });
-                    if (created.ok && Array.isArray(created.data) && created.data[0]) {
-                        item.id_berita = Number(created.data[0].id_berita);
+                    const created = await restRequest('berita_kegiatan', {
+                        method: 'POST',
+                        body: supabasePayload
+                    });
+                    if (!created.ok) {
+                        showToast('Gagal simpan ke Supabase: ' + (created.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
+                    if (Array.isArray(created.data) && created.data[0]) {
+                        item.id_berita = Number(created.data[0].id_berita || nextId);
                         syncInfo.mode = 'connected';
                     }
                 }
@@ -2756,7 +2803,11 @@ END $$;`;
 
             if (editId > 0) {
                 if (isSupabaseReady()) {
-                    await restRequest('pengurus', { method: 'PATCH', query: 'id_pengurus=eq.' + editId, body: payload });
+                    const updated = await restRequest('pengurus', { method: 'PATCH', query: 'id_pengurus=eq.' + editId, body: payload });
+                    if (!updated.ok) {
+                        showToast('Gagal perbarui di Supabase: ' + (updated.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
                 }
                 state.pengurus = state.pengurus.map((p) => Number(p.id_pengurus) === editId ? Object.assign({}, p, payload) : p);
                 showToast('Data pengurus diperbarui.');
@@ -2765,8 +2816,12 @@ END $$;`;
                 const item = Object.assign({ id_pengurus: nextId }, payload);
                 if (isSupabaseReady()) {
                     const created = await restRequest('pengurus', { method: 'POST', body: payload });
-                    if (created.ok && Array.isArray(created.data) && created.data[0]) {
-                        item.id_pengurus = Number(created.data[0].id_pengurus);
+                    if (!created.ok) {
+                        showToast('Gagal simpan ke Supabase: ' + (created.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
+                    if (Array.isArray(created.data) && created.data[0]) {
+                        item.id_pengurus = Number(created.data[0].id_pengurus || nextId);
                         syncInfo.mode = 'connected';
                     }
                 }
@@ -2798,7 +2853,11 @@ END $$;`;
             };
 
             if (isSupabaseReady() && tableMap[collection]) {
-                await restRequest(tableMap[collection], { method: 'DELETE', query: pkMap[collection] + '=eq.' + targetId });
+                const delRes = await restRequest(tableMap[collection], { method: 'DELETE', query: pkMap[collection] + '=eq.' + targetId });
+                if (!delRes.ok) {
+                    showToast('Gagal hapus di Supabase: ' + (delRes.error || 'Cek izin'), true);
+                    return;
+                }
             }
 
             state[collection] = state[collection].filter((row) => Number(row[pkMap[collection]]) !== targetId);
@@ -2862,10 +2921,10 @@ END $$;`;
                 return { headers, lines, filename: 'hkti-dpc-asmat-program-bantuan.csv', label: 'program & bantuan' };
             }
             if (source === 'berita') {
-                const headers = ['id_berita', 'judul', 'tanggal_kegiatan', 'kategori', 'kode_distrik', 'nama_distrik', 'penulis', 'ringkasan', 'url_dokumentasi'];
+                const headers = ['id_berita', 'judul', 'tanggal_kegiatan', 'kategori', 'kode_distrik', 'nama_distrik', 'penulis', 'ringkasan', 'url_dokumentasi', 'status_publikasi'];
                 const lines = state.berita.map((b) => {
                     const d = getDistrikById(b.id_distrik);
-                    return formatCsvRow([b.id_berita, b.judul, b.tanggal, b.kategori, d.kode, d.nama, b.penulis, b.ringkasan, b.url_dokumentasi || b.url_berita || '']);
+                    return formatCsvRow([b.id_berita, b.judul, b.tanggal, b.kategori, d.kode, d.nama, b.penulis || '', b.ringkasan, b.url_dokumentasi || b.url_berita || '', b.status_publikasi || 'Terbit']);
                 });
                 return { headers, lines, filename: 'hkti-dpc-asmat-berita-kegiatan.csv', label: 'berita kegiatan' };
             }
@@ -3038,6 +3097,7 @@ END $$;`;
                                 ringkasan: narasiVal,
                                 isi_berita: narasiVal,
                                 url_dokumentasi: urlDocVal,
+                                url_berita: urlDocVal,
                                 status_publikasi: 'Terbit'
                             };
                             state.berita.unshift(localItem);
@@ -3046,10 +3106,10 @@ END $$;`;
                                 tanggal_kegiatan: tanggalVal,
                                 kategori: localItem.kategori,
                                 id_distrik: idDist,
-                                penulis: localItem.penulis,
                                 ringkasan: narasiVal,
                                 isi_berita: narasiVal,
                                 url_dokumentasi: urlDocVal || null,
+                                url_berita: urlDocVal || null,
                                 status_publikasi: 'Terbit'
                             });
                             added++;
