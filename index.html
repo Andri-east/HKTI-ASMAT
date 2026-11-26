@@ -10,6 +10,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script>
+        if (typeof window.switchTab !== 'function') {
+            window.switchTab = function (tabId) {
+                document.querySelectorAll('.nav-tab').forEach(function (t) {
+                    t.classList.toggle('active', t.getAttribute('data-tab') === tabId);
+                });
+                document.querySelectorAll('.tab-section').forEach(function (s) {
+                    s.classList.toggle('active', s.id === 'panel-' + tabId);
+                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+        }
         window.handleCustomLogoError = function () {
             var svgEl = document.getElementById('hkti-vector-logo');
             var imgEl = document.getElementById('hkti-custom-logo');
@@ -845,7 +856,11 @@
             </div>
 
             <form id="form-tambah-anggota" onsubmit="handleAddAnggotaKelompok(event)" class="manager-only p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3 text-sm">
-                <div class="text-xs font-extrabold uppercase tracking-wider text-hkti-dark">Tambah Anggota Baru</div>
+                <input type="hidden" name="edit_id" id="anggota-edit-id" value="" />
+                <div class="flex items-center justify-between gap-2">
+                    <div id="form-anggota-title" class="text-xs font-extrabold uppercase tracking-wider text-hkti-dark">Tambah Anggota Baru</div>
+                    <button type="button" id="btn-cancel-edit-anggota" onclick="resetAnggotaForm()" class="hidden px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer">Batal Edit</button>
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <input type="text" name="nama_anggota" required placeholder="Nama lengkap anggota *" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
                     <select name="jenis_kelamin" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
@@ -857,8 +872,8 @@
                     <input type="text" name="peran_anggota" value="Anggota" placeholder="Peran (Sekretaris/Bendahara/Anggota)" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
                     <input type="text" name="no_hp_wa" placeholder="No. HP / WA" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
                     <button type="submit" class="touch-target px-4 py-2 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer">
-                        <i class="ph-bold ph-user-plus text-base"></i>
-                        <span>Tambah Anggota</span>
+                        <i id="btn-submit-anggota-icon" class="ph-bold ph-user-plus text-base"></i>
+                        <span id="btn-submit-anggota-label">Tambah Anggota</span>
                     </button>
                 </div>
             </form>
@@ -1489,6 +1504,47 @@ NOTIFY pgrst, 'reload schema';`;
             return Number(kelompokItem.jumlah_anggota || 0);
         }
 
+        function resetAnggotaForm() {
+            const form = document.getElementById('form-tambah-anggota');
+            if (form) form.reset();
+            const eid = document.getElementById('anggota-edit-id');
+            if (eid) eid.value = '';
+            const title = document.getElementById('form-anggota-title');
+            if (title) title.textContent = 'Tambah Anggota Baru';
+            const lbl = document.getElementById('btn-submit-anggota-label');
+            if (lbl) lbl.textContent = 'Tambah Anggota';
+            const icon = document.getElementById('btn-submit-anggota-icon');
+            if (icon) icon.className = 'ph-bold ph-user-plus text-base';
+            const cancelBtn = document.getElementById('btn-cancel-edit-anggota');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
+        }
+
+        function startEditAnggotaKelompok(idAnggota) {
+            if (!requireManagerAccess()) return;
+            const member = (state.anggota || []).find(function (a) { return Number(a.id_anggota) === Number(idAnggota); });
+            const form = document.getElementById('form-tambah-anggota');
+            if (!member || !form) return;
+
+            document.getElementById('anggota-edit-id').value = member.id_anggota;
+            form.nama_anggota.value = member.nama_anggota || '';
+            form.jenis_kelamin.value = member.jenis_kelamin === 'P' ? 'P' : 'L';
+            form.peran_anggota.value = member.peran_anggota || 'Anggota';
+            const waRaw = String(member.no_hp_wa || '').trim();
+            form.no_hp_wa.value = waRaw && waRaw !== '0' ? waRaw : '';
+
+            const title = document.getElementById('form-anggota-title');
+            if (title) title.textContent = 'Edit Data Anggota';
+            const lbl = document.getElementById('btn-submit-anggota-label');
+            if (lbl) lbl.textContent = 'Simpan Perubahan';
+            const icon = document.getElementById('btn-submit-anggota-icon');
+            if (icon) icon.className = 'ph-bold ph-floppy-disk text-base';
+            const cancelBtn = document.getElementById('btn-cancel-edit-anggota');
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+            form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            form.nama_anggota.focus();
+        }
+
         function openAnggotaKelompokModal(idKelompok) {
             const kel = state.kelompok.find(function (k) { return Number(k.id_kelompok) === Number(idKelompok); });
             if (!kel) return;
@@ -1503,9 +1559,7 @@ NOTIFY pgrst, 'reload schema';`;
             if (titleEl) titleEl.textContent = kel.nama_kelompok;
             if (subEl) subEl.textContent = 'Komoditas: ' + (kel.komoditas_utama || '-') + ' • Ketua: ' + (kel.nama_ketua || kel.ketua_kelompok || '-');
 
-            const addForm = document.getElementById('form-tambah-anggota');
-            if (addForm) addForm.reset();
-
+            resetAnggotaForm();
             renderAnggotaModalList();
             openModal('modal-anggota-kelompok');
         }
@@ -1544,9 +1598,14 @@ NOTIFY pgrst, 'reload schema';`;
                                     (waDisplay ? ' • WA: ' + escapeHtml(waDisplay) : '') +
                                 '</div>' +
                             '</div>' +
-                            '<button type="button" onclick="handleDeleteAnggotaKelompok(' + m.id_anggota + ')" class="manager-only touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold inline-flex items-center gap-1 shrink-0 cursor-pointer">' +
-                                '<i class="ph-bold ph-trash"></i><span>Hapus</span>' +
-                            '</button>' +
+                            '<div class="manager-only flex items-center gap-1.5 shrink-0">' +
+                                '<button type="button" onclick="startEditAnggotaKelompok(' + m.id_anggota + ')" class="touch-target px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold inline-flex items-center gap-1 cursor-pointer">' +
+                                    '<i class="ph-bold ph-pencil-simple"></i><span>Edit</span>' +
+                                '</button>' +
+                                '<button type="button" onclick="handleDeleteAnggotaKelompok(' + m.id_anggota + ')" class="touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold inline-flex items-center gap-1 cursor-pointer">' +
+                                    '<i class="ph-bold ph-trash"></i><span>Hapus</span>' +
+                                '</button>' +
+                            '</div>' +
                         '</div>'
                     );
                 }).join('');
@@ -1557,6 +1616,7 @@ NOTIFY pgrst, 'reload schema';`;
             if (!requireManagerAccess() || !activeKelompokModalId) return;
 
             const fd = new FormData(e.target);
+            const editId = Number(fd.get('edit_id') || 0);
             const namaAnggota = String(fd.get('nama_anggota') || '').trim();
             if (!namaAnggota) return;
 
@@ -1567,6 +1627,29 @@ NOTIFY pgrst, 'reload schema';`;
                 peran_anggota: String(fd.get('peran_anggota') || 'Anggota').trim() || 'Anggota',
                 no_hp_wa: String(fd.get('no_hp_wa') || '').trim() || null
             };
+
+            if (editId > 0) {
+                if (isSupabaseReady()) {
+                    const updated = await restRequest('anggota_kelompok', {
+                        method: 'PATCH',
+                        query: 'id_anggota=eq.' + editId,
+                        body: payload
+                    });
+                    if (!updated.ok) {
+                        showToast('Gagal perbarui anggota di Supabase: ' + (updated.error || 'Cek izin/kolom'), true);
+                        return;
+                    }
+                }
+                state.anggota = (state.anggota || []).map(function (a) {
+                    return Number(a.id_anggota) === editId ? Object.assign({}, a, payload) : a;
+                });
+                saveState();
+                resetAnggotaForm();
+                renderAnggotaModalList();
+                renderKelompokList();
+                showToast('Data anggota diperbarui.');
+                return;
+            }
 
             const nextId = (state.anggota || []).reduce(function (m, x) { return Math.max(m, Number(x.id_anggota) || 0); }, 0) + 1;
             const newItem = Object.assign({ id_anggota: nextId }, payload);
@@ -1597,7 +1680,7 @@ NOTIFY pgrst, 'reload schema';`;
             }
 
             saveState();
-            e.target.reset();
+            resetAnggotaForm();
             renderAnggotaModalList();
             renderKelompokList();
             renderDistrikGrid();
@@ -1620,6 +1703,11 @@ NOTIFY pgrst, 'reload schema';`;
             }
 
             state.anggota = (state.anggota || []).filter(function (a) { return Number(a.id_anggota) !== targetId; });
+            const currentEditId = Number((document.getElementById('anggota-edit-id') || {}).value || 0);
+            if (currentEditId === targetId) {
+                resetAnggotaForm();
+            }
+
             const totalNow = getAnggotaByKelompok(activeKelompokModalId).length;
             state.kelompok = state.kelompok.map(function (k) {
                 return Number(k.id_kelompok) === Number(activeKelompokModalId)
@@ -2780,6 +2868,7 @@ NOTIFY pgrst, 'reload schema';`;
             resetKendalaForm();
             resetProgramForm();
             resetPengurusForm();
+            resetAnggotaForm();
         }
 
         function startEditKelompok(id) {
