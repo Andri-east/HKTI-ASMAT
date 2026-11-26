@@ -342,6 +342,22 @@
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Jenis Kelompok *</label>
+                                <select name="jenis_kelompok" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="Pertanian">Pertanian</option>
+                                    <option value="Perikanan">Perikanan</option>
+                                    <option value="Peternakan">Peternakan</option>
+                                    <option value="Perkebunan">Perkebunan</option>
+                                    <option value="Kehutanan">Kehutanan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Komoditas Utama *</label>
+                                <input type="text" name="komoditas_utama" required placeholder="Sagu, Kepiting Bakau, Udang..." class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Distrik (91.18) *</label>
                                 <select id="select-distrik-kelompok" name="id_distrik" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none"></select>
                             </div>
@@ -352,8 +368,8 @@
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="block font-semibold text-slate-700 mb-1">Komoditas Utama *</label>
-                                <input type="text" name="komoditas_utama" required placeholder="Sagu, Kepiting Bakau, Udang..." class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                                <label class="block font-semibold text-slate-700 mb-1">Ketua Kelompok *</label>
+                                <input type="text" name="ketua_kelompok" required placeholder="Nama ketua" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Jumlah Anggota *</label>
@@ -362,21 +378,18 @@
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="block font-semibold text-slate-700 mb-1">Ketua Kelompok *</label>
-                                <input type="text" name="ketua_kelompok" required placeholder="Nama ketua" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
-                            </div>
-                            <div>
                                 <label class="block font-semibold text-slate-700 mb-1">No. HP / WA</label>
                                 <input type="text" name="no_hp_wa" placeholder="08xxxxxxxxxx" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
                             </div>
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Status Aktif</label>
-                            <select name="status_aktif" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
-                                <option value="Aktif">Aktif</option>
-                                <option value="Dalam Pembinaan">Dalam Pembinaan</option>
-                                <option value="Nonaktif">Nonaktif</option>
-                            </select>
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Status Pendampingan</label>
+                                <select name="status_aktif" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="Terdata">Terdata</option>
+                                    <option value="Dalam Pembinaan">Dalam Pembinaan</option>
+                                    <option value="Aktif">Aktif</option>
+                                    <option value="Mandiri">Mandiri</option>
+                                </select>
+                            </div>
                         </div>
                         <button type="submit" class="touch-target w-full py-3 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold inline-flex items-center justify-center gap-2 shadow-xs transition cursor-pointer">
                             <i class="ph-bold ph-floppy-disk text-lg"></i>
@@ -925,13 +938,35 @@
     </div>
 
     <script>
-        // =====================================================================
-        // 1. KONFIGURASI & SANITASI KUNCI API (ANTI INVALID API KEY)
-        // =====================================================================
         const DEFAULT_PROJECT_URL = 'https://yxuasktivchtbbugdpos.supabase.co';
         const DEFAULT_ANON_KEY = 'sb_publishable_I4owPs2tzgrJFWtpVMMFgg_IazGOuU5';
         const STORAGE_KEY = 'hkti_dpc_asmat_data_v3';
         const AUTH_STORAGE_KEY = 'hkti_dpc_asmat_auth_v1';
+
+        const ALLOWED_JENIS_KELOMPOK = ['Pertanian', 'Perikanan', 'Peternakan', 'Perkebunan', 'Kehutanan'];
+
+        function normalizeJenisKelompok(rawJenis, komoditasText) {
+            const direct = String(rawJenis || '').trim();
+            for (let i = 0; i < ALLOWED_JENIS_KELOMPOK.length; i++) {
+                if (ALLOWED_JENIS_KELOMPOK[i].toLowerCase() === direct.toLowerCase()) {
+                    return ALLOWED_JENIS_KELOMPOK[i];
+                }
+            }
+            const probe = (direct + ' ' + String(komoditasText || '')).toLowerCase();
+            if (/kepiting|udang|ikan|nelayan|perikanan|laut|muara|pesisir|rumput\s*laut|gelembung/.test(probe)) {
+                return 'Perikanan';
+            }
+            if (/ayam|babi|kambing|sapi|unggas|ternak|peternak/.test(probe)) {
+                return 'Peternakan';
+            }
+            if (/kelapa|sawit|kopi|kakao|pinang|perkebunan/.test(probe)) {
+                return 'Perkebunan';
+            }
+            if (/gaharu|kayu|rotan|damar|hutan|kehutanan/.test(probe)) {
+                return 'Kehutanan';
+            }
+            return 'Pertanian';
+        }
 
         function cleanApiKey(rawKey) {
             return String(rawKey || '')
@@ -961,7 +996,7 @@
             if (!clean) return 'Baca Sumber';
             try {
                 const host = new URL(clean).hostname.replace(/^www\./i, '').toLowerCase();
-                if (host.includes('mata-publik.net')) return 'Mata Publik';
+                if (host.indexOf('mata-publik.net') !== -1) return 'Mata Publik';
                 return host || 'Baca Sumber';
             } catch (e) {
                 return 'Baca Sumber';
@@ -973,14 +1008,14 @@
             const inputVal = cleanApiKey(inputEl ? inputEl.value : '');
             if (inputVal) return inputVal;
 
-            const stateVal = cleanApiKey(state?.supabase?.apiKey || '');
+            const stateVal = cleanApiKey(state && state.supabase ? state.supabase.apiKey : '');
             if (stateVal) return stateVal;
 
             try {
                 const raw = window.localStorage.getItem(STORAGE_KEY);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    return cleanApiKey(parsed?.supabase?.apiKey || '');
+                    return cleanApiKey(parsed && parsed.supabase ? parsed.supabase.apiKey : '');
                 }
             } catch (e) {}
             return '';
@@ -990,10 +1025,10 @@
             const urlEl = document.getElementById('supabase-url-input');
             const keyEl = document.getElementById('supabase-key-input');
 
-            const cleanUrl = sanitizeProjectUrl(urlEl ? urlEl.value : state?.supabase?.projectUrl);
+            const cleanUrl = sanitizeProjectUrl(urlEl ? urlEl.value : (state && state.supabase ? state.supabase.projectUrl : ''));
             const cleanKey = cleanApiKey(keyEl ? keyEl.value : getActiveApiKey());
 
-            if (cleanKey.startsWith('sb_secret_')) {
+            if (cleanKey.indexOf('sb_secret_') === 0) {
                 return {
                     ok: false,
                     error: 'Dilarang memakai Secret key (sb_secret_...) di browser. Gunakan Publishable key atau anon public key.'
@@ -1020,9 +1055,9 @@
         }
 
         function isSupabaseReady() {
-            const url = sanitizeProjectUrl(state?.supabase?.projectUrl);
+            const url = sanitizeProjectUrl(state && state.supabase ? state.supabase.projectUrl : '');
             const key = getActiveApiKey();
-            return Boolean(url.startsWith('https://') && key.length > 10 && !key.startsWith('sb_secret_'));
+            return Boolean(url.indexOf('https://') === 0 && key.length > 10 && key.indexOf('sb_secret_') !== 0);
         }
 
         const DISTRIK_25 = [
@@ -1055,7 +1090,7 @@
 
         const SQL_SCHEMA_AND_RLS = `-- ============================================================================
 -- SKRIP SQL SISTEM MANAJEMEN DATA HKTI DPC KABUPATEN ASMAT
--- Mencakup: Skema Tabel, Data 25 Distrik (91.18), & Kebijakan RLS (Auth)
+-- Mencakup: Skema Tabel, Penyesuaian Check Constraint, 25 Distrik & RLS
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS distrik (
@@ -1069,17 +1104,27 @@ CREATE TABLE IF NOT EXISTS distrik (
 CREATE TABLE IF NOT EXISTS kelompok_usaha (
     id_kelompok SERIAL PRIMARY KEY,
     nama_kelompok VARCHAR(150) NOT NULL,
+    jenis_kelompok VARCHAR(120) NOT NULL DEFAULT 'Pertanian',
     id_distrik INT NOT NULL REFERENCES distrik(id_distrik),
     kampung VARCHAR(100) NOT NULL,
-    komoditas_utama VARCHAR(120) NOT NULL,
+    nama_ketua VARCHAR(150) NOT NULL,
     jumlah_anggota INT NOT NULL DEFAULT 1,
-    ketua_kelompok VARCHAR(150) NOT NULL,
-    no_hp_wa VARCHAR(30),
-    status_aktif VARCHAR(30) NOT NULL DEFAULT 'Aktif',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    luas_area_hektar NUMERIC DEFAULT 0.00,
+    status_pendampingan VARCHAR(30) NOT NULL DEFAULT 'Terdata',
+    diinput_oleh INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    komoditas_utama VARCHAR(120)
 );
 
 ALTER TABLE public.kelompok_usaha ADD COLUMN IF NOT EXISTS komoditas_utama VARCHAR(120);
+ALTER TABLE public.kelompok_usaha ADD COLUMN IF NOT EXISTS jenis_kelompok VARCHAR(120) DEFAULT 'Pertanian';
+ALTER TABLE public.kelompok_usaha ADD COLUMN IF NOT EXISTS nama_ketua VARCHAR(150);
+ALTER TABLE public.kelompok_usaha ADD COLUMN IF NOT EXISTS status_pendampingan VARCHAR(30) DEFAULT 'Terdata';
+
+-- Perbarui check constraint jenis_kelompok agar mendukung kategori baku HKTI
+ALTER TABLE public.kelompok_usaha DROP CONSTRAINT IF EXISTS kelompok_usaha_jenis_kelompok_check;
+ALTER TABLE public.kelompok_usaha ADD CONSTRAINT kelompok_usaha_jenis_kelompok_check
+    CHECK (jenis_kelompok IN ('Pertanian', 'Perikanan', 'Peternakan', 'Perkebunan', 'Kehutanan'));
 
 CREATE TABLE IF NOT EXISTS kendala_infrastruktur (
     id_kendala SERIAL PRIMARY KEY,
@@ -1198,7 +1243,9 @@ BEGIN
             tbl
         );
     END LOOP;
-END $$;`;
+END $$;
+
+NOTIFY pgrst, 'reload schema';`;
 
         function createDefaultState() {
             return {
@@ -1211,34 +1258,43 @@ END $$;`;
                     {
                         id_kelompok: 1,
                         nama_kelompok: 'Kelompok Tani Sagu Yaosakor',
+                        jenis_kelompok: 'Pertanian',
                         id_distrik: 17,
                         kampung: 'Yaosakor',
                         komoditas_utama: 'Sagu Basah & Tepung Sagu',
                         jumlah_anggota: 24,
+                        nama_ketua: 'Yosef B.',
                         ketua_kelompok: 'Yosef B.',
                         no_hp_wa: '082349960907',
+                        status_pendampingan: 'Aktif',
                         status_aktif: 'Aktif'
                     },
                     {
                         id_kelompok: 2,
                         nama_kelompok: 'Kelompok Nelayan Kepiting Atsj',
+                        jenis_kelompok: 'Perikanan',
                         id_distrik: 2,
                         kampung: 'Atsj',
                         komoditas_utama: 'Kepiting Bakau & Udang Muara',
                         jumlah_anggota: 18,
+                        nama_ketua: 'Markus K.',
                         ketua_kelompok: 'Markus K.',
                         no_hp_wa: '082349960907',
+                        status_pendampingan: 'Aktif',
                         status_aktif: 'Aktif'
                     },
                     {
                         id_kelompok: 3,
                         nama_kelompok: 'Kelompok Tani Hortikultura Agats',
+                        jenis_kelompok: 'Pertanian',
                         id_distrik: 1,
                         kampung: 'Bis Agats',
                         komoditas_utama: 'Sayuran Pekarangan & P2L',
                         jumlah_anggota: 16,
+                        nama_ketua: 'Maria W.',
                         ketua_kelompok: 'Maria W.',
                         no_hp_wa: '082349960907',
+                        status_pendampingan: 'Dalam Pembinaan',
                         status_aktif: 'Dalam Pembinaan'
                     }
                 ],
@@ -1319,11 +1375,11 @@ END $$;`;
         }
 
         function comparePengurusByJabatan(a, b) {
-            const rankDiff = getJabatanRank(a?.jabatan) - getJabatanRank(b?.jabatan);
+            const rankDiff = getJabatanRank(a && a.jabatan) - getJabatanRank(b && b.jabatan);
             if (rankDiff !== 0) return rankDiff;
-            const jabDiff = String(a?.jabatan || '').localeCompare(String(b?.jabatan || ''), 'id', { sensitivity: 'base' });
+            const jabDiff = String((a && a.jabatan) || '').localeCompare(String((b && b.jabatan) || ''), 'id', { sensitivity: 'base' });
             if (jabDiff !== 0) return jabDiff;
-            return String(a?.nama_lengkap || '').localeCompare(String(b?.nama_lengkap || ''), 'id', { sensitivity: 'base' });
+            return String((a && a.nama_lengkap) || '').localeCompare(String((b && b.nama_lengkap) || ''), 'id', { sensitivity: 'base' });
         }
 
         function loadState() {
@@ -1334,15 +1390,15 @@ END $$;`;
                 const def = createDefaultState();
                 return {
                     supabase: {
-                        projectUrl: sanitizeProjectUrl(parsed?.supabase?.projectUrl || DEFAULT_PROJECT_URL),
-                        apiKey: cleanApiKey(parsed?.supabase?.apiKey || DEFAULT_ANON_KEY)
+                        projectUrl: sanitizeProjectUrl(parsed && parsed.supabase ? parsed.supabase.projectUrl : DEFAULT_PROJECT_URL),
+                        apiKey: cleanApiKey(parsed && parsed.supabase ? parsed.supabase.apiKey : DEFAULT_ANON_KEY)
                     },
-                    customLogoDataUrl: typeof parsed?.customLogoDataUrl === 'string' ? parsed.customLogoDataUrl : '',
-                    kelompok: Array.isArray(parsed?.kelompok) ? parsed.kelompok : def.kelompok,
-                    kendala: Array.isArray(parsed?.kendala) ? parsed.kendala : def.kendala,
-                    program: Array.isArray(parsed?.program) ? parsed.program : def.program,
-                    berita: Array.isArray(parsed?.berita) ? parsed.berita : def.berita,
-                    pengurus: Array.isArray(parsed?.pengurus) ? parsed.pengurus : def.pengurus
+                    customLogoDataUrl: parsed && typeof parsed.customLogoDataUrl === 'string' ? parsed.customLogoDataUrl : '',
+                    kelompok: parsed && Array.isArray(parsed.kelompok) ? parsed.kelompok : def.kelompok,
+                    kendala: parsed && Array.isArray(parsed.kendala) ? parsed.kendala : def.kendala,
+                    program: parsed && Array.isArray(parsed.program) ? parsed.program : def.program,
+                    berita: parsed && Array.isArray(parsed.berita) ? parsed.berita : def.berita,
+                    pengurus: parsed && Array.isArray(parsed.pengurus) ? parsed.pengurus : def.pengurus
                 };
             } catch (e) {
                 return createDefaultState();
@@ -1362,7 +1418,7 @@ END $$;`;
                 const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
-                if (!parsed || !parsed.access_token || !parsed.user?.email) return null;
+                if (!parsed || !parsed.access_token || !parsed.user || !parsed.user.email) return null;
                 return parsed;
             } catch (e) {
                 return null;
@@ -1382,7 +1438,7 @@ END $$;`;
         }
 
         function isManagerLoggedIn() {
-            return Boolean(authSession && authSession.access_token && authSession.user?.email);
+            return Boolean(authSession && authSession.access_token && authSession.user && authSession.user.email);
         }
 
         function applyAuthUiMode() {
@@ -1404,7 +1460,7 @@ END $$;`;
             }
 
             const wrappers = ['kelompok-list-wrapper', 'kendala-list-wrapper', 'program-list-wrapper', 'pengurus-list-wrapper'];
-            wrappers.forEach((id) => {
+            wrappers.forEach(function (id) {
                 const el = document.getElementById(id);
                 if (!el) return;
                 if (loggedIn) {
@@ -1455,8 +1511,8 @@ END $$;`;
                     refresh_token: data.refresh_token || authSession.refresh_token,
                     expires_at: expiresAt,
                     user: {
-                        id: data.user?.id || authSession.user?.id || '',
-                        email: data.user?.email || authSession.user?.email || ''
+                        id: (data.user && data.user.id) || (authSession.user && authSession.user.id) || '',
+                        email: (data.user && data.user.email) || (authSession.user && authSession.user.email) || ''
                     }
                 });
                 return true;
@@ -1484,8 +1540,10 @@ END $$;`;
                 return;
             }
 
-            const email = String(document.getElementById('login-email-input')?.value || '').trim();
-            const password = String(document.getElementById('login-password-input')?.value || '');
+            const emailEl = document.getElementById('login-email-input');
+            const passEl = document.getElementById('login-password-input');
+            const email = String(emailEl ? emailEl.value : '').trim();
+            const password = String(passEl ? passEl.value : '');
             if (submitBtn) submitBtn.disabled = true;
 
             try {
@@ -1495,10 +1553,10 @@ END $$;`;
                         'apikey': cred.key,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email: email, password: password })
                 });
 
-                const payload = await res.json().catch(() => ({}));
+                const payload = await res.json().catch(function () { return {}; });
 
                 if (!res.ok || !payload.access_token) {
                     const rawMsg = payload.error_description || payload.msg || payload.message || 'Email atau kata sandi tidak sesuai.';
@@ -1515,15 +1573,15 @@ END $$;`;
                     refresh_token: payload.refresh_token || '',
                     expires_at: expiresAt,
                     user: {
-                        id: payload.user?.id || '',
-                        email: payload.user?.email || email
+                        id: (payload.user && payload.user.id) || '',
+                        email: (payload.user && payload.user.email) || email
                     }
                 });
 
-                document.getElementById('login-password-input').value = '';
+                if (passEl) passEl.value = '';
                 closeModal('modal-login');
                 renderAllViews();
-                showToast('Login berhasil sebagai ' + (payload.user?.email || email) + '.');
+                showToast('Login berhasil sebagai ' + ((payload.user && payload.user.email) || email) + '.');
                 await runDiagnosticAndSync();
             } catch (err) {
                 if (errBox) {
@@ -1536,7 +1594,7 @@ END $$;`;
         }
 
         async function handleLogout() {
-            const token = authSession?.access_token;
+            const token = authSession && authSession.access_token ? authSession.access_token : null;
             try {
                 if (token) {
                     const baseUrl = sanitizeProjectUrl(state.supabase.projectUrl);
@@ -1547,7 +1605,7 @@ END $$;`;
                             'apikey': anonKey,
                             'Authorization': 'Bearer ' + token
                         }
-                    }).catch(() => {});
+                    }).catch(function () {});
                 }
             } finally {
                 saveAuthSession(null);
@@ -1580,13 +1638,18 @@ END $$;`;
         }
 
         function getRestBaseUrl() {
-            return sanitizeProjectUrl(state?.supabase?.projectUrl) + '/rest/v1';
+            return sanitizeProjectUrl(state && state.supabase ? state.supabase.projectUrl : '') + '/rest/v1';
         }
 
-        async function restRequest(table, { method = 'GET', query = '', body = undefined } = {}) {
+        async function restRequest(table, opts) {
+            const options = opts || {};
+            const method = options.method || 'GET';
+            const query = options.query || '';
+            const body = options.body;
+
             const anonKey = getActiveApiKey();
             const baseUrl = getRestBaseUrl();
-            if (!baseUrl.startsWith('https://') || !anonKey) {
+            if (baseUrl.indexOf('https://') !== 0 || !anonKey) {
                 return { ok: false, error: 'Project URL atau Publishable / Anon Key belum diatur.' };
             }
             if (method !== 'GET' && !isManagerLoggedIn()) {
@@ -1608,19 +1671,19 @@ END $$;`;
                 }
 
                 const res = await fetch(endpoint, {
-                    method,
-                    headers,
+                    method: method,
+                    headers: headers,
                     body: body !== undefined ? JSON.stringify(body) : undefined
                 });
 
-                const txt = await res.text().catch(() => '');
+                const txt = await res.text().catch(function () { return ''; });
                 if (!res.ok) {
                     return { ok: false, status: res.status, error: txt || ('HTTP ' + res.status) };
                 }
 
                 return { ok: true, status: res.status, data: txt ? JSON.parse(txt) : null };
             } catch (err) {
-                return { ok: false, error: err?.message || 'Jaringan offline.' };
+                return { ok: false, error: (err && err.message) || 'Jaringan offline.' };
             }
         }
 
@@ -1653,7 +1716,7 @@ END $$;`;
             updateConnectionUi();
             setDiagnosticBox(logs.concat(['[WAIT] Menguji API key & mengambil data tabel...']));
 
-            const [rDistrik, rKelompok, rKendala, rProgram, rBerita, rPengurus] = await Promise.all([
+            const results = await Promise.all([
                 restRequest('distrik', { query: 'select=*&order=id_distrik.asc' }),
                 restRequest('kelompok_usaha', { query: 'select=*&order=id_kelompok.desc' }),
                 restRequest('kendala_infrastruktur', { query: 'select=*&order=id_kendala.desc' }),
@@ -1661,6 +1724,13 @@ END $$;`;
                 restRequest('berita_kegiatan', { query: 'select=*&order=id_berita.desc' }),
                 restRequest('pengurus', { query: 'select=*&order=id_pengurus.desc' })
             ]);
+
+            const rDistrik = results[0];
+            const rKelompok = results[1];
+            const rKendala = results[2];
+            const rProgram = results[3];
+            const rBerita = results[4];
+            const rPengurus = results[5];
 
             syncInfo.busy = false;
 
@@ -1676,13 +1746,15 @@ END $$;`;
             let invalidKeyDetected = false;
             let anySuccess = false;
 
-            checks.forEach(([tbl, res]) => {
+            checks.forEach(function (pair) {
+                const tbl = pair[0];
+                const res = pair[1];
                 if (res.ok) {
                     anySuccess = true;
                     logs.push('[OK] ' + tbl + ': ' + (Array.isArray(res.data) ? res.data.length : 0) + ' baris');
                 } else {
                     const errStr = String(res.error || '');
-                    if (errStr.toLowerCase().includes('invalid api key')) {
+                    if (errStr.toLowerCase().indexOf('invalid api key') !== -1) {
                         invalidKeyDetected = true;
                     }
                     logs.push('[ERR] ' + tbl + ': ' + errStr);
@@ -1699,8 +1771,8 @@ END $$;`;
             }
 
             if (rDistrik.ok && Array.isArray(rDistrik.data) && rDistrik.data.length > 0) {
-                const oldById = new Map(DISTRIK_25.map((item) => [Number(item.id), item]));
-                const mappedDistrik = rDistrik.data.map((d, idx) => {
+                const oldById = new Map(DISTRIK_25.map(function (item) { return [Number(item.id), item]; }));
+                const mappedDistrik = rDistrik.data.map(function (d, idx) {
                     const fallback = DISTRIK_25[idx] || {};
                     return {
                         id: Number(d.id_distrik),
@@ -1710,62 +1782,86 @@ END $$;`;
                         potensi: d.potensi_unggulan || fallback.potensi || 'Sagu, Perikanan Sungai & Muara'
                     };
                 });
-                DISTRIK_25.splice(0, DISTRIK_25.length, ...mappedDistrik);
+                DISTRIK_25.splice(0, DISTRIK_25.length);
+                for (let i = 0; i < mappedDistrik.length; i++) {
+                    DISTRIK_25.push(mappedDistrik[i]);
+                }
 
-                const remapDistrikId = (rawId) => {
+                const remapDistrikId = function (rawId) {
                     if (!rawId) return rawId;
-                    if (DISTRIK_25.some((x) => Number(x.id) === Number(rawId))) return Number(rawId);
+                    if (DISTRIK_25.some(function (x) { return Number(x.id) === Number(rawId); })) return Number(rawId);
                     const prev = oldById.get(Number(rawId));
                     if (prev) {
-                        const match = DISTRIK_25.find((x) => x.kode === prev.kode || x.nama.toLowerCase() === prev.nama.toLowerCase());
+                        const match = DISTRIK_25.find(function (x) {
+                            return x.kode === prev.kode || x.nama.toLowerCase() === prev.nama.toLowerCase();
+                        });
                         if (match) return Number(match.id);
                     }
                     return Number(rawId);
                 };
 
-                state.kelompok = state.kelompok.map((k) => Object.assign({}, k, { id_distrik: remapDistrikId(k.id_distrik) }));
-                state.kendala = state.kendala.map((k) => Object.assign({}, k, { id_distrik: remapDistrikId(k.id_distrik) }));
-                state.program = state.program.map((p) => Object.assign({}, p, { id_distrik: remapDistrikId(p.id_distrik) }));
-                state.berita = state.berita.map((b) => Object.assign({}, b, { id_distrik: remapDistrikId(b.id_distrik) }));
-                state.pengurus = state.pengurus.map((p) => Object.assign({}, p, { id_distrik: p.id_distrik ? remapDistrikId(p.id_distrik) : null }));
+                state.kelompok = state.kelompok.map(function (k) { return Object.assign({}, k, { id_distrik: remapDistrikId(k.id_distrik) }); });
+                state.kendala = state.kendala.map(function (k) { return Object.assign({}, k, { id_distrik: remapDistrikId(k.id_distrik) }); });
+                state.program = state.program.map(function (p) { return Object.assign({}, p, { id_distrik: remapDistrikId(p.id_distrik) }); });
+                state.berita = state.berita.map(function (b) { return Object.assign({}, b, { id_distrik: remapDistrikId(b.id_distrik) }); });
+                state.pengurus = state.pengurus.map(function (p) { return Object.assign({}, p, { id_distrik: p.id_distrik ? remapDistrikId(p.id_distrik) : null }); });
             }
+
             if (rKelompok.ok && Array.isArray(rKelompok.data)) {
-                state.kelompok = rKelompok.data.map((k) => ({
-                    id_kelompok: Number(k.id_kelompok),
-                    nama_kelompok: k.nama_kelompok,
-                    id_distrik: Number(k.id_distrik),
-                    kampung: k.kampung,
-                    komoditas_utama: k.komoditas_utama || k.jenis_kelompok || 'Sagu & Perikanan',
-                    jumlah_anggota: Number(k.jumlah_anggota || 1),
-                    ketua_kelompok: k.ketua_kelompok || k.nama_ketua || '-',
-                    no_hp_wa: k.no_hp_wa || k.no_hp_ketua || '',
-                    status_aktif: k.status_aktif || k.status_pendampingan || 'Aktif'
-                }));
+                const localKelById = new Map(state.kelompok.map(function (item) { return [Number(item.id_kelompok), item]; }));
+                state.kelompok = rKelompok.data.map(function (k) {
+                    const prev = localKelById.get(Number(k.id_kelompok));
+                    const ketuaVal = k.nama_ketua || k.ketua_kelompok || (prev && (prev.nama_ketua || prev.ketua_kelompok)) || '-';
+                    const komoditasVal = k.komoditas_utama || (prev && prev.komoditas_utama) || k.jenis_kelompok || 'Sagu & Perikanan';
+                    const jenisVal = normalizeJenisKelompok(k.jenis_kelompok || (prev && prev.jenis_kelompok), komoditasVal);
+                    const statusVal = k.status_pendampingan || k.status_aktif || (prev && (prev.status_pendampingan || prev.status_aktif)) || 'Terdata';
+                    return {
+                        id_kelompok: Number(k.id_kelompok),
+                        nama_kelompok: k.nama_kelompok,
+                        jenis_kelompok: jenisVal,
+                        id_distrik: Number(k.id_distrik),
+                        kampung: k.kampung,
+                        komoditas_utama: komoditasVal,
+                        jumlah_anggota: Number(k.jumlah_anggota || 1),
+                        nama_ketua: ketuaVal,
+                        ketua_kelompok: ketuaVal,
+                        no_hp_wa: k.no_hp_wa || k.no_hp_ketua || (prev && prev.no_hp_wa) || '',
+                        status_pendampingan: statusVal,
+                        status_aktif: statusVal
+                    };
+                });
             }
+
             if (rKendala.ok && Array.isArray(rKendala.data)) {
-                state.kendala = rKendala.data.map((item) => ({
-                    id_kendala: Number(item.id_kendala),
-                    id_distrik: Number(item.id_distrik),
-                    kategori_kendala: item.kategori_kendala || 'BBM & Transportasi Air',
-                    deskripsi: item.deskripsi || item.ringkasan_kendala || '-',
-                    tingkat_urgensi: item.tingkat_urgensi || item.prioritas_penanganan || 'Sedang',
-                    status_tindak_lanjut: item.status_tindak_lanjut || 'Terdata'
-                }));
+                state.kendala = rKendala.data.map(function (item) {
+                    return {
+                        id_kendala: Number(item.id_kendala),
+                        id_distrik: Number(item.id_distrik),
+                        kategori_kendala: item.kategori_kendala || 'BBM & Transportasi Air',
+                        deskripsi: item.deskripsi || item.ringkasan_kendala || '-',
+                        tingkat_urgensi: item.tingkat_urgensi || item.prioritas_penanganan || 'Sedang',
+                        status_tindak_lanjut: item.status_tindak_lanjut || 'Terdata'
+                    };
+                });
             }
+
             if (rProgram.ok && Array.isArray(rProgram.data)) {
-                state.program = rProgram.data.map((item) => ({
-                    id_program: Number(item.id_program),
-                    nama_program: item.nama_program,
-                    sumber_mitra: item.sumber_mitra || item.jenis_bantuan || 'HKTI DPC Asmat',
-                    id_distrik: Number(item.id_distrik),
-                    kelompok_penerima: item.kelompok_penerima || item.kampung || '-',
-                    tahun_jadwal: item.tahun_jadwal || item.tanggal_penyaluran || '2026',
-                    status_penyaluran: item.status_penyaluran || 'Tersalurkan'
-                }));
+                state.program = rProgram.data.map(function (item) {
+                    return {
+                        id_program: Number(item.id_program),
+                        nama_program: item.nama_program,
+                        sumber_mitra: item.sumber_mitra || item.jenis_bantuan || 'HKTI DPC Asmat',
+                        id_distrik: Number(item.id_distrik),
+                        kelompok_penerima: item.kelompok_penerima || item.kampung || '-',
+                        tahun_jadwal: item.tahun_jadwal || item.tanggal_penyaluran || '2026',
+                        status_penyaluran: item.status_penyaluran || 'Tersalurkan'
+                    };
+                });
             }
+
             if (rBerita.ok && Array.isArray(rBerita.data)) {
-                const localById = new Map(state.berita.map((item) => [Number(item.id_berita), item]));
-                state.berita = rBerita.data.map((b) => {
+                const localById = new Map(state.berita.map(function (item) { return [Number(item.id_berita), item]; }));
+                state.berita = rBerita.data.map(function (b) {
                     const prev = localById.get(Number(b.id_berita));
                     const ringkasanVal = b.ringkasan || b.isi_berita || '';
                     const isiVal = b.isi_berita || b.ringkasan || '';
@@ -1777,7 +1873,7 @@ END $$;`;
                         id_distrik: b.id_distrik ? Number(b.id_distrik) : 1,
                         ringkasan: ringkasanVal,
                         isi_berita: isiVal,
-                        penulis: prev?.penulis || 'Sekretariat DPC HKTI Asmat',
+                        penulis: (prev && prev.penulis) || 'Sekretariat DPC HKTI Asmat',
                         kategori: b.kategori || 'Kegiatan Lapangan',
                         url_dokumentasi: urlVal,
                         url_berita: urlVal,
@@ -1785,29 +1881,32 @@ END $$;`;
                     };
                 });
             }
+
             if (rPengurus.ok && Array.isArray(rPengurus.data)) {
-                state.pengurus = rPengurus.data.map((p) => ({
-                    id_pengurus: Number(p.id_pengurus),
-                    tingkatan: p.tingkatan || 'DPC',
-                    nama_lengkap: p.nama_lengkap,
-                    jenis_kelamin: p.jenis_kelamin || 'L',
-                    no_hp_wa: p.no_hp_wa || '',
-                    email: p.email || '',
-                    id_distrik: p.id_distrik ? Number(p.id_distrik) : null,
-                    kampung: p.kampung || '',
-                    jabatan: p.jabatan || '',
-                    bidang: p.bidang || '',
-                    periode_sk: p.periode_sk || '2026 - 2031',
-                    status_kepengurusan: p.status_kepengurusan || 'Aktif',
-                    hak_akses: p.hak_akses || 'Operator Lapangan'
-                }));
+                state.pengurus = rPengurus.data.map(function (p) {
+                    return {
+                        id_pengurus: Number(p.id_pengurus),
+                        tingkatan: p.tingkatan || 'DPC',
+                        nama_lengkap: p.nama_lengkap,
+                        jenis_kelamin: p.jenis_kelamin || 'L',
+                        no_hp_wa: p.no_hp_wa || '',
+                        email: p.email || '',
+                        id_distrik: p.id_distrik ? Number(p.id_distrik) : null,
+                        kampung: p.kampung || '',
+                        jabatan: p.jabatan || '',
+                        bidang: p.bidang || '',
+                        periode_sk: p.periode_sk || '2026 - 2031',
+                        status_kepengurusan: p.status_kepengurusan || 'Aktif',
+                        hak_akses: p.hak_akses || 'Operator Lapangan'
+                    };
+                });
             }
 
             saveState();
             populateDistrictDropdowns();
             renderAllViews();
 
-            const allOk = checks.every(([, r]) => r.ok);
+            const allOk = checks.every(function (pair) { return pair[1].ok; });
             syncInfo.lastSync = new Date().toLocaleTimeString('id-ID');
 
             if (allOk) {
@@ -1873,7 +1972,7 @@ END $$;`;
         }
 
         let toastTimeout = null;
-        function showToast(msg, isErr = false) {
+        function showToast(msg, isErr) {
             const banner = document.getElementById('toast-banner');
             const card = document.getElementById('toast-card');
             const icon = document.getElementById('toast-icon');
@@ -1893,7 +1992,7 @@ END $$;`;
             banner.classList.add('opacity-100', 'translate-y-0');
 
             if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
+            toastTimeout = setTimeout(function () {
                 banner.classList.remove('opacity-100', 'translate-y-0');
                 banner.classList.add('opacity-0', 'translate-y-3');
             }, 3500);
@@ -1917,17 +2016,20 @@ END $$;`;
         }
 
         function switchTab(tabId) {
-            document.querySelectorAll('.nav-tab').forEach((btn) => {
-                btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
-            });
-            document.querySelectorAll('.tab-section').forEach((sec) => {
-                sec.classList.toggle('active', sec.id === 'panel-' + tabId);
-            });
+            const tabs = document.querySelectorAll('.nav-tab');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.toggle('active', tabs[i].getAttribute('data-tab') === tabId);
+            }
+            const secs = document.querySelectorAll('.tab-section');
+            for (let j = 0; j < secs.length; j++) {
+                secs[j].classList.toggle('active', secs[j].id === 'panel-' + tabId);
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function escapeHtml(str) {
-            return String(str ?? '')
+            const val = (str === null || str === undefined) ? '' : String(str);
+            return val
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
@@ -1936,39 +2038,50 @@ END $$;`;
         }
 
         function getDistrikById(id) {
-            return DISTRIK_25.find((d) => Number(d.id) === Number(id)) || { id: 0, kode: '91.18', nama: 'Kabupaten Asmat', pusat: 'Agats', potensi: '' };
+            for (let i = 0; i < DISTRIK_25.length; i++) {
+                if (Number(DISTRIK_25[i].id) === Number(id)) {
+                    return DISTRIK_25[i];
+                }
+            }
+            return { id: 0, kode: '91.18', nama: 'Kabupaten Asmat', pusat: 'Agats', potensi: '' };
         }
 
-        function resolveDistrikId(codeOrName, fallbackId = 1) {
+        function resolveDistrikId(codeOrName, fallbackId) {
+            const fb = fallbackId || 1;
             const needle = String(codeOrName || '').trim().toLowerCase();
-            if (!needle) return fallbackId;
-            const found = DISTRIK_25.find(
-                (d) => d.kode.toLowerCase() === needle || d.nama.toLowerCase() === needle || ('distrik ' + d.nama.toLowerCase()) === needle
-            );
-            return found ? found.id : fallbackId;
+            if (!needle) return fb;
+            for (let i = 0; i < DISTRIK_25.length; i++) {
+                const d = DISTRIK_25[i];
+                if (d.kode.toLowerCase() === needle || d.nama.toLowerCase() === needle || ('distrik ' + d.nama.toLowerCase()) === needle) {
+                    return d.id;
+                }
+            }
+            return fb;
         }
 
         function openModal(id) {
-            document.getElementById(id)?.classList.add('open');
+            const el = document.getElementById(id);
+            if (el) el.classList.add('open');
         }
 
         function closeModal(id) {
-            document.getElementById(id)?.classList.remove('open');
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('open');
         }
 
         function handleModalBackdrop(e, id) {
-            if (e.target?.id === id) closeModal(id);
+            if (e && e.target && e.target.id === id) closeModal(id);
         }
 
         function populateDistrictDropdowns() {
             const ids = ['select-distrik-kelompok', 'select-distrik-kendala', 'select-distrik-program', 'select-distrik-pengurus', 'select-distrik-berita'];
-            ids.forEach((id) => {
+            ids.forEach(function (id) {
                 const el = document.getElementById(id);
                 if (!el) return;
                 const prev = el.value;
                 const optional = id === 'select-distrik-pengurus' || id === 'select-distrik-berita';
                 let html = optional ? '<option value="">-- Pilih Distrik (Opsional) --</option>' : '';
-                DISTRIK_25.forEach((d) => {
+                DISTRIK_25.forEach(function (d) {
                     html += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' — ' + d.nama) + '</option>';
                 });
                 el.innerHTML = html;
@@ -1979,7 +2092,7 @@ END $$;`;
             if (filterKelompok) {
                 const prevFilter = filterKelompok.value || 'SEMUA';
                 let opts = '<option value="SEMUA">Semua 25 Distrik</option>';
-                DISTRIK_25.forEach((d) => {
+                DISTRIK_25.forEach(function (d) {
                     opts += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' ' + d.nama) + '</option>';
                 });
                 filterKelompok.innerHTML = opts;
@@ -1990,7 +2103,7 @@ END $$;`;
             if (filterPengurus) {
                 const prevFilterPengurus = filterPengurus.value || 'SEMUA';
                 let opts = '<option value="SEMUA">Semua 25 Distrik</option><option value="TANPA_DISTRIK">Tanpa Distrik (DPC Umum)</option>';
-                DISTRIK_25.forEach((d) => {
+                DISTRIK_25.forEach(function (d) {
                     opts += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' ' + d.nama) + '</option>';
                 });
                 filterPengurus.innerHTML = opts;
@@ -2006,7 +2119,7 @@ END $$;`;
             const kampungMap = new Map();
             let hasEmptyKampung = false;
 
-            state.pengurus.forEach((p) => {
+            state.pengurus.forEach(function (p) {
                 const raw = String(p.kampung || '').trim();
                 if (!raw) {
                     hasEmptyKampung = true;
@@ -2018,10 +2131,12 @@ END $$;`;
                 }
             });
 
-            const sortedKampung = Array.from(kampungMap.values()).sort((a, b) => a.localeCompare(b, 'id', { sensitivity: 'base' }));
+            const sortedKampung = Array.from(kampungMap.values()).sort(function (a, b) {
+                return a.localeCompare(b, 'id', { sensitivity: 'base' });
+            });
 
             let opts = '<option value="SEMUA">Semua Kampung</option>';
-            sortedKampung.forEach((kName) => {
+            sortedKampung.forEach(function (kName) {
                 opts += '<option value="' + escapeHtml(kName.toLowerCase()) + '">' + escapeHtml(kName) + '</option>';
             });
             if (hasEmptyKampung) {
@@ -2030,45 +2145,51 @@ END $$;`;
 
             filterKampung.innerHTML = opts;
 
-            const availableValues = ['SEMUA', ...sortedKampung.map((k) => k.toLowerCase())];
+            const availableValues = ['SEMUA'].concat(sortedKampung.map(function (k) { return k.toLowerCase(); }));
             if (hasEmptyKampung) availableValues.push('TANPA_KAMPUNG');
 
-            filterKampung.value = availableValues.includes(prevKampung) ? prevKampung : 'SEMUA';
+            filterKampung.value = availableValues.indexOf(prevKampung) !== -1 ? prevKampung : 'SEMUA';
         }
 
         function renderDistrikGrid() {
             const kpi = document.getElementById('kpi-cards');
             if (kpi) {
-                const totalAnggota = state.kelompok.reduce((acc, k) => acc + (Number(k.jumlah_anggota) || 0), 0);
+                const totalAnggota = state.kelompok.reduce(function (acc, k) { return acc + (Number(k.jumlah_anggota) || 0); }, 0);
                 const cards = [
                     { title: 'Wilayah Distrik', val: String(DISTRIK_25.length), sub: 'Kode 91.18.01 – 91.18.25', icon: 'ph-map-pin-line', tone: 'bg-emerald-100 text-emerald-800' },
                     { title: 'Kelompok Usaha', val: state.kelompok.length, sub: totalAnggota + ' anggota terdata', icon: 'ph-users-three', tone: 'bg-hkti-pale text-hkti-dark' },
                     { title: 'Kendala Infrastruktur', val: state.kendala.length, sub: 'BBM, cold storage & sinyal', icon: 'ph-boat', tone: 'bg-amber-100 text-amber-800' },
                     { title: 'Program & Berita', val: state.program.length + ' / ' + state.berita.length, sub: 'Program bantuan & berita', icon: 'ph-package', tone: 'bg-sky-100 text-sky-800' }
                 ];
-                kpi.innerHTML = cards.map((c) => (
-                    '<div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 flex items-start justify-between gap-3">' +
-                        '<div>' +
-                            '<div class="text-xs font-semibold text-slate-500">' + escapeHtml(c.title) + '</div>' +
-                            '<div class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">' + escapeHtml(c.val) + '</div>' +
-                            '<div class="text-xs text-slate-500 mt-1">' + escapeHtml(c.sub) + '</div>' +
-                        '</div>' +
-                        '<div class="w-11 h-11 rounded-2xl ' + c.tone + ' flex items-center justify-center shrink-0"><i class="ph-bold ' + c.icon + ' text-xl"></i></div>' +
-                    '</div>'
-                )).join('');
+                kpi.innerHTML = cards.map(function (c) {
+                    return (
+                        '<div class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 flex items-start justify-between gap-3">' +
+                            '<div>' +
+                                '<div class="text-xs font-semibold text-slate-500">' + escapeHtml(c.title) + '</div>' +
+                                '<div class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">' + escapeHtml(c.val) + '</div>' +
+                                '<div class="text-xs text-slate-500 mt-1">' + escapeHtml(c.sub) + '</div>' +
+                            '</div>' +
+                            '<div class="w-11 h-11 rounded-2xl ' + c.tone + ' flex items-center justify-center shrink-0"><i class="ph-bold ' + c.icon + ' text-xl"></i></div>' +
+                        '</div>'
+                    );
+                }).join('');
             }
 
             const grid = document.getElementById('distrik-25-grid');
             if (!grid) return;
-            const q = String(document.getElementById('search-distrik')?.value || '').trim().toLowerCase();
+            const searchEl = document.getElementById('search-distrik');
+            const q = String(searchEl ? searchEl.value : '').trim().toLowerCase();
 
-            const filtered = DISTRIK_25.filter((d) => {
+            const filtered = DISTRIK_25.filter(function (d) {
                 if (!q) return true;
-                return d.nama.toLowerCase().includes(q) || d.kode.toLowerCase().includes(q) || d.pusat.toLowerCase().includes(q) || d.potensi.toLowerCase().includes(q);
+                return d.nama.toLowerCase().indexOf(q) !== -1 ||
+                    d.kode.toLowerCase().indexOf(q) !== -1 ||
+                    d.pusat.toLowerCase().indexOf(q) !== -1 ||
+                    d.potensi.toLowerCase().indexOf(q) !== -1;
             });
 
-            grid.innerHTML = filtered.map((d) => {
-                const count = state.kelompok.filter((k) => Number(k.id_distrik) === Number(d.id)).length;
+            grid.innerHTML = filtered.map(function (d) {
+                const count = state.kelompok.filter(function (k) { return Number(k.id_distrik) === Number(d.id); }).length;
                 return (
                     '<button type="button" onclick="filterByDistrict(' + d.id + ')" class="touch-target text-left p-4 rounded-2xl border border-slate-200 hover:border-hkti-primary hover:bg-emerald-50/50 transition cursor-pointer space-y-1.5">' +
                         '<div class="flex items-center justify-between gap-2">' +
@@ -2095,12 +2216,22 @@ END $$;`;
         function renderKelompokList() {
             const box = document.getElementById('kelompok-list');
             if (!box) return;
-            const distrik = document.getElementById('filter-distrik-kelompok')?.value || 'SEMUA';
-            const q = String(document.getElementById('search-kelompok')?.value || '').trim().toLowerCase();
+            const filterDistEl = document.getElementById('filter-distrik-kelompok');
+            const searchKelEl = document.getElementById('search-kelompok');
+            const distrik = filterDistEl ? filterDistEl.value : 'SEMUA';
+            const q = String(searchKelEl ? searchKelEl.value : '').trim().toLowerCase();
 
-            const rows = state.kelompok.filter((k) => {
+            const rows = state.kelompok.filter(function (k) {
+                const ketuaNama = k.nama_ketua || k.ketua_kelompok || '';
+                const komoditasNama = k.komoditas_utama || '';
+                const jenisNama = k.jenis_kelompok || '';
                 const okDist = distrik === 'SEMUA' || Number(k.id_distrik) === Number(distrik);
-                const okQ = !q || k.nama_kelompok.toLowerCase().includes(q) || k.komoditas_utama.toLowerCase().includes(q) || k.kampung.toLowerCase().includes(q) || k.ketua_kelompok.toLowerCase().includes(q);
+                const okQ = !q ||
+                    String(k.nama_kelompok || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(komoditasNama).toLowerCase().indexOf(q) !== -1 ||
+                    String(jenisNama).toLowerCase().indexOf(q) !== -1 ||
+                    String(k.kampung || '').toLowerCase().indexOf(q) !== -1 ||
+                    String(ketuaNama).toLowerCase().indexOf(q) !== -1;
                 return okDist && okQ;
             });
 
@@ -2109,15 +2240,20 @@ END $$;`;
                 return;
             }
 
-            box.innerHTML = rows.map((k) => {
+            box.innerHTML = rows.map(function (k) {
                 const d = getDistrikById(k.id_distrik);
+                const ketuaNama = k.nama_ketua || k.ketua_kelompok || '-';
+                const komoditasNama = k.komoditas_utama || '-';
+                const jenisNama = normalizeJenisKelompok(k.jenis_kelompok, komoditasNama);
+                const statusNama = k.status_pendampingan || k.status_aktif || 'Terdata';
                 return (
                     '<div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2.5">' +
                         '<div class="flex flex-wrap items-start justify-between gap-2">' +
                             '<div>' +
                                 '<div class="flex flex-wrap items-center gap-1.5">' +
                                     '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-hkti-pale text-hkti-dark">' + escapeHtml(d.kode + ' ' + d.nama) + ' • ' + escapeHtml(k.kampung) + '</span>' +
-                                    '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">' + escapeHtml(k.status_aktif) + '</span>' +
+                                    '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800">' + escapeHtml(jenisNama) + '</span>' +
+                                    '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">' + escapeHtml(statusNama) + '</span>' +
                                 '</div>' +
                                 '<h3 class="font-display font-bold text-base text-slate-900 mt-1">' + escapeHtml(k.nama_kelompok) + '</h3>' +
                             '</div>' +
@@ -2127,8 +2263,8 @@ END $$;`;
                             '</div>' +
                         '</div>' +
                         '<div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200/80">' +
-                            '<div>Komoditas: <strong class="text-hkti-dark">' + escapeHtml(k.komoditas_utama) + '</strong></div>' +
-                            '<div>Ketua: <strong class="text-slate-900">' + escapeHtml(k.ketua_kelompok) + '</strong> (' + escapeHtml(k.jumlah_anggota) + ' anggota)</div>' +
+                            '<div>Komoditas: <strong class="text-hkti-dark">' + escapeHtml(komoditasNama) + '</strong></div>' +
+                            '<div>Ketua: <strong class="text-slate-900">' + escapeHtml(ketuaNama) + '</strong> (' + escapeHtml(k.jumlah_anggota) + ' anggota)</div>' +
                             '<div>HP/WA: <strong class="text-slate-900">' + escapeHtml(k.no_hp_wa || '-') + '</strong></div>' +
                         '</div>' +
                     '</div>'
@@ -2139,15 +2275,16 @@ END $$;`;
         function renderKendalaList() {
             const box = document.getElementById('kendala-list');
             if (!box) return;
-            const prio = document.getElementById('filter-prioritas-kendala')?.value || 'SEMUA';
-            const rows = state.kendala.filter((item) => prio === 'SEMUA' || item.tingkat_urgensi === prio);
+            const prioEl = document.getElementById('filter-prioritas-kendala');
+            const prio = prioEl ? prioEl.value : 'SEMUA';
+            const rows = state.kendala.filter(function (item) { return prio === 'SEMUA' || item.tingkat_urgensi === prio; });
 
             if (rows.length === 0) {
                 box.innerHTML = '<div class="p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-sm text-slate-500">Belum ada data kendala infrastruktur.</div>';
                 return;
             }
 
-            box.innerHTML = rows.map((item) => {
+            box.innerHTML = rows.map(function (item) {
                 const d = getDistrikById(item.id_distrik);
                 const badge = item.tingkat_urgensi === 'Tinggi' ? 'bg-rose-100 text-rose-800' : item.tingkat_urgensi === 'Rendah' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800';
                 return (
@@ -2173,15 +2310,16 @@ END $$;`;
         function renderProgramList() {
             const box = document.getElementById('program-list');
             if (!box) return;
-            const st = document.getElementById('filter-status-program')?.value || 'SEMUA';
-            const rows = state.program.filter((item) => st === 'SEMUA' || item.status_penyaluran === st);
+            const stEl = document.getElementById('filter-status-program');
+            const st = stEl ? stEl.value : 'SEMUA';
+            const rows = state.program.filter(function (item) { return st === 'SEMUA' || item.status_penyaluran === st; });
 
             if (rows.length === 0) {
                 box.innerHTML = '<div class="p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-sm text-slate-500">Belum ada data program &amp; bantuan.</div>';
                 return;
             }
 
-            box.innerHTML = rows.map((item) => {
+            box.innerHTML = rows.map(function (item) {
                 const d = getDistrikById(item.id_distrik);
                 return (
                     '<div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">' +
@@ -2215,7 +2353,7 @@ END $$;`;
                 box.innerHTML = '<div class="col-span-full p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-sm text-slate-500">Belum ada berita kegiatan dipublikasikan.</div>';
                 return;
             }
-            box.innerHTML = state.berita.map((b) => {
+            box.innerHTML = state.berita.map(function (b) {
                 const d = getDistrikById(b.id_distrik);
                 const safeUrl = sanitizeNewsUrl(b.url_dokumentasi || b.url_berita || '');
                 const sourceLabel = getNewsSourceLabel(safeUrl);
@@ -2253,12 +2391,15 @@ END $$;`;
             syncKampungPengurusFilter();
             const box = document.getElementById('pengurus-list');
             if (!box) return;
-            const tingkatan = document.getElementById('filter-tingkatan-pengurus')?.value || 'SEMUA';
-            const distrik = document.getElementById('filter-distrik-pengurus')?.value || 'SEMUA';
-            const kampung = document.getElementById('filter-kampung-pengurus')?.value || 'SEMUA';
+            const tingEl = document.getElementById('filter-tingkatan-pengurus');
+            const distEl = document.getElementById('filter-distrik-pengurus');
+            const kampEl = document.getElementById('filter-kampung-pengurus');
+            const tingkatan = tingEl ? tingEl.value : 'SEMUA';
+            const distrik = distEl ? distEl.value : 'SEMUA';
+            const kampung = kampEl ? kampEl.value : 'SEMUA';
 
             const rows = state.pengurus
-                .filter((p) => {
+                .filter(function (p) {
                     const okTingkatan = tingkatan === 'SEMUA' || p.tingkatan === tingkatan;
                     const okDistrik = distrik === 'SEMUA'
                         || (distrik === 'TANPA_DISTRIK' && !p.id_distrik)
@@ -2276,7 +2417,7 @@ END $$;`;
                 return;
             }
 
-            box.innerHTML = rows.map((p) => {
+            box.innerHTML = rows.map(function (p) {
                 const d = p.id_distrik ? getDistrikById(p.id_distrik) : null;
                 return (
                     '<div class="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 flex flex-wrap items-center justify-between gap-2">' +
@@ -2299,13 +2440,14 @@ END $$;`;
         }
 
         function updateCsvImportHint() {
-            const source = document.getElementById('csv-source-select')?.value || 'kelompok';
+            const selEl = document.getElementById('csv-source-select');
+            const source = selEl ? selEl.value : 'kelompok';
             const btnLabel = document.getElementById('csv-import-btn-label');
             const hint = document.getElementById('csv-import-schema-hint');
             const metaMap = {
                 kelompok: {
                     btn: 'Impor CSV Kelompok & Komoditas',
-                    hint: 'Kolom: nama_kelompok, kode_distrik, nama_distrik, kampung, komoditas_utama, jumlah_anggota, ketua_kelompok, no_hp_wa, status_aktif'
+                    hint: 'Kolom: nama_kelompok, jenis_kelompok (Pertanian/Perikanan/Peternakan/Perkebunan/Kehutanan), kode_distrik, nama_distrik, kampung, komoditas_utama, jumlah_anggota, ketua_kelompok, status_pendampingan'
                 },
                 kendala: {
                     btn: 'Impor CSV Kendala Infrastruktur',
@@ -2339,8 +2481,8 @@ END $$;`;
 
             const urlIn = document.getElementById('supabase-url-input');
             const keyIn = document.getElementById('supabase-key-input');
-            if (urlIn) urlIn.value = sanitizeProjectUrl(state?.supabase?.projectUrl);
-            if (keyIn) keyIn.value = cleanApiKey(state?.supabase?.apiKey || '');
+            if (urlIn) urlIn.value = sanitizeProjectUrl(state && state.supabase ? state.supabase.projectUrl : '');
+            if (keyIn) keyIn.value = cleanApiKey(state && state.supabase ? state.supabase.apiKey : '');
             updateCsvImportHint();
             applyLogoDisplay();
         }
@@ -2362,11 +2504,11 @@ END $$;`;
 
         function handleLogoUpload(e) {
             if (!requireManagerAccess()) return;
-            const file = e.target?.files?.[0];
+            const file = e && e.target && e.target.files ? e.target.files[0] : null;
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function (evt) {
-                state.customLogoDataUrl = String(evt.target?.result || '');
+                state.customLogoDataUrl = String((evt && evt.target && evt.target.result) || '');
                 saveState();
                 applyLogoDisplay();
                 showToast('Logo lokal diterapkan.');
@@ -2404,22 +2546,27 @@ END $$;`;
 
         function startEditKelompok(id) {
             if (!requireManagerAccess()) return;
-            const item = state.kelompok.find((x) => Number(x.id_kelompok) === Number(id));
+            const item = state.kelompok.find(function (x) { return Number(x.id_kelompok) === Number(id); });
             if (!item) return;
             const form = document.getElementById('form-kelompok');
             if (!form) return;
+            const komoditasVal = item.komoditas_utama || '';
             document.getElementById('kelompok-edit-id').value = item.id_kelompok;
-            form.nama_kelompok.value = item.nama_kelompok;
-            form.id_distrik.value = item.id_distrik;
-            form.kampung.value = item.kampung;
-            form.komoditas_utama.value = item.komoditas_utama;
-            form.jumlah_anggota.value = item.jumlah_anggota;
-            form.ketua_kelompok.value = item.ketua_kelompok;
+            form.nama_kelompok.value = item.nama_kelompok || '';
+            if (form.jenis_kelompok) {
+                form.jenis_kelompok.value = normalizeJenisKelompok(item.jenis_kelompok, komoditasVal);
+            }
+            form.id_distrik.value = item.id_distrik || 1;
+            form.kampung.value = item.kampung || '';
+            form.komoditas_utama.value = komoditasVal;
+            form.jumlah_anggota.value = item.jumlah_anggota || 1;
+            form.ketua_kelompok.value = item.nama_ketua || item.ketua_kelompok || '';
             form.no_hp_wa.value = item.no_hp_wa || '';
-            form.status_aktif.value = item.status_aktif;
+            form.status_aktif.value = item.status_pendampingan || item.status_aktif || 'Terdata';
             document.getElementById('form-kelompok-title').textContent = 'Edit Kelompok Usaha';
             document.getElementById('btn-submit-kelompok-label').textContent = 'Perbarui Kelompok Usaha';
-            document.getElementById('btn-cancel-edit-kelompok')?.classList.remove('hidden');
+            const cancelBtn = document.getElementById('btn-cancel-edit-kelompok');
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
             form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -2432,7 +2579,8 @@ END $$;`;
             if (title) title.textContent = 'Tambah Kelompok Usaha';
             const lbl = document.getElementById('btn-submit-kelompok-label');
             if (lbl) lbl.textContent = 'Simpan Kelompok Usaha';
-            document.getElementById('btn-cancel-edit-kelompok')?.classList.add('hidden');
+            const cancelBtn = document.getElementById('btn-cancel-edit-kelompok');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
         }
 
         async function handleSubmitKelompok(e) {
@@ -2440,32 +2588,53 @@ END $$;`;
             if (!requireManagerAccess()) return;
             const fd = new FormData(e.target);
             const editId = Number(fd.get('edit_id') || 0);
-            const payload = {
+            const komoditasUtama = String(fd.get('komoditas_utama') || '').trim();
+            const jenisKelompok = normalizeJenisKelompok(fd.get('jenis_kelompok'), komoditasUtama);
+            const statusPendampingan = String(fd.get('status_aktif') || 'Terdata').trim();
+            const namaKetua = String(fd.get('ketua_kelompok') || '').trim();
+            const noHpWa = String(fd.get('no_hp_wa') || '').trim();
+
+            const supabasePayload = {
                 nama_kelompok: String(fd.get('nama_kelompok') || '').trim(),
+                jenis_kelompok: jenisKelompok,
+                komoditas_utama: komoditasUtama,
                 id_distrik: Number(fd.get('id_distrik') || 1),
                 kampung: String(fd.get('kampung') || '').trim(),
-                komoditas_utama: String(fd.get('komoditas_utama') || '').trim(),
-                jumlah_anggota: Number(fd.get('jumlah_anggota') || 1),
-                ketua_kelompok: String(fd.get('ketua_kelompok') || '').trim(),
-                no_hp_wa: String(fd.get('no_hp_wa') || '').trim(),
-                status_aktif: String(fd.get('status_aktif') || 'Aktif')
+                nama_ketua: namaKetua,
+                jumlah_anggota: Math.max(1, Number(fd.get('jumlah_anggota') || 1)),
+                status_pendampingan: statusPendampingan || 'Terdata'
             };
+
+            const localRecord = Object.assign({}, supabasePayload, {
+                ketua_kelompok: namaKetua,
+                no_hp_wa: noHpWa,
+                status_aktif: statusPendampingan || 'Terdata'
+            });
 
             if (editId > 0) {
                 if (isSupabaseReady()) {
-                    const updated = await restRequest('kelompok_usaha', { method: 'PATCH', query: 'id_kelompok=eq.' + editId, body: payload });
+                    const updated = await restRequest('kelompok_usaha', {
+                        method: 'PATCH',
+                        query: 'id_kelompok=eq.' + editId,
+                        body: supabasePayload
+                    });
                     if (!updated.ok) {
                         showToast('Gagal perbarui di Supabase: ' + (updated.error || 'Cek izin/kolom'), true);
                         return;
                     }
                 }
-                state.kelompok = state.kelompok.map((k) => Number(k.id_kelompok) === editId ? Object.assign({}, k, payload) : k);
+                state.kelompok = state.kelompok.map(function (k) {
+                    return Number(k.id_kelompok) === editId ? Object.assign({}, k, localRecord) : k;
+                });
                 showToast('Data kelompok usaha diperbarui.');
             } else {
-                const nextId = state.kelompok.reduce((m, x) => Math.max(m, Number(x.id_kelompok) || 0), 0) + 1;
-                const item = Object.assign({ id_kelompok: nextId }, payload);
+                const nextId = state.kelompok.reduce(function (m, x) { return Math.max(m, Number(x.id_kelompok) || 0); }, 0) + 1;
+                const item = Object.assign({ id_kelompok: nextId }, localRecord);
                 if (isSupabaseReady()) {
-                    const created = await restRequest('kelompok_usaha', { method: 'POST', body: payload });
+                    const created = await restRequest('kelompok_usaha', {
+                        method: 'POST',
+                        body: supabasePayload
+                    });
                     if (!created.ok) {
                         showToast('Gagal simpan ke Supabase: ' + (created.error || 'Cek izin/kolom'), true);
                         return;
@@ -2486,7 +2655,7 @@ END $$;`;
 
         function startEditKendala(id) {
             if (!requireManagerAccess()) return;
-            const item = state.kendala.find((x) => Number(x.id_kendala) === Number(id));
+            const item = state.kendala.find(function (x) { return Number(x.id_kendala) === Number(id); });
             if (!item) return;
             const form = document.getElementById('form-kendala');
             if (!form) return;
@@ -2498,7 +2667,8 @@ END $$;`;
             form.status_tindak_lanjut.value = item.status_tindak_lanjut;
             document.getElementById('form-kendala-title').textContent = 'Edit Kendala Infrastruktur';
             document.getElementById('btn-submit-kendala-label').textContent = 'Perbarui Kendala';
-            document.getElementById('btn-cancel-edit-kendala')?.classList.remove('hidden');
+            const cancelBtn = document.getElementById('btn-cancel-edit-kendala');
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
             form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -2511,7 +2681,8 @@ END $$;`;
             if (title) title.textContent = 'Catat Kendala Infrastruktur';
             const lbl = document.getElementById('btn-submit-kendala-label');
             if (lbl) lbl.textContent = 'Simpan Kendala Infrastruktur';
-            document.getElementById('btn-cancel-edit-kendala')?.classList.add('hidden');
+            const cancelBtn = document.getElementById('btn-cancel-edit-kendala');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
         }
 
         async function handleSubmitKendala(e) {
@@ -2535,10 +2706,10 @@ END $$;`;
                         return;
                     }
                 }
-                state.kendala = state.kendala.map((k) => Number(k.id_kendala) === editId ? Object.assign({}, k, payload) : k);
+                state.kendala = state.kendala.map(function (k) { return Number(k.id_kendala) === editId ? Object.assign({}, k, payload) : k; });
                 showToast('Kendala infrastruktur diperbarui.');
             } else {
-                const nextId = state.kendala.reduce((m, x) => Math.max(m, Number(x.id_kendala) || 0), 0) + 1;
+                const nextId = state.kendala.reduce(function (m, x) { return Math.max(m, Number(x.id_kendala) || 0); }, 0) + 1;
                 const item = Object.assign({ id_kendala: nextId }, payload);
                 if (isSupabaseReady()) {
                     const created = await restRequest('kendala_infrastruktur', { method: 'POST', body: payload });
@@ -2562,7 +2733,7 @@ END $$;`;
 
         function startEditProgram(id) {
             if (!requireManagerAccess()) return;
-            const item = state.program.find((x) => Number(x.id_program) === Number(id));
+            const item = state.program.find(function (x) { return Number(x.id_program) === Number(id); });
             if (!item) return;
             const form = document.getElementById('form-program');
             if (!form) return;
@@ -2575,7 +2746,8 @@ END $$;`;
             form.status_penyaluran.value = item.status_penyaluran;
             document.getElementById('form-program-title').textContent = 'Edit Program & Bantuan';
             document.getElementById('btn-submit-program-label').textContent = 'Perbarui Program';
-            document.getElementById('btn-cancel-edit-program')?.classList.remove('hidden');
+            const cancelBtn = document.getElementById('btn-cancel-edit-program');
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
             form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -2588,7 +2760,8 @@ END $$;`;
             if (title) title.textContent = 'Catat Program & Bantuan';
             const lbl = document.getElementById('btn-submit-program-label');
             if (lbl) lbl.textContent = 'Simpan Program & Bantuan';
-            document.getElementById('btn-cancel-edit-program')?.classList.add('hidden');
+            const cancelBtn = document.getElementById('btn-cancel-edit-program');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
         }
 
         async function handleSubmitProgram(e) {
@@ -2613,10 +2786,10 @@ END $$;`;
                         return;
                     }
                 }
-                state.program = state.program.map((p) => Number(p.id_program) === editId ? Object.assign({}, p, payload) : p);
+                state.program = state.program.map(function (p) { return Number(p.id_program) === editId ? Object.assign({}, p, payload) : p; });
                 showToast('Program & bantuan diperbarui.');
             } else {
-                const nextId = state.program.reduce((m, x) => Math.max(m, Number(x.id_program) || 0), 0) + 1;
+                const nextId = state.program.reduce(function (m, x) { return Math.max(m, Number(x.id_program) || 0); }, 0) + 1;
                 const item = Object.assign({ id_program: nextId }, payload);
                 if (isSupabaseReady()) {
                     const created = await restRequest('program_bantuan', { method: 'POST', body: payload });
@@ -2651,7 +2824,7 @@ END $$;`;
 
         function startEditBerita(id) {
             if (!requireManagerAccess()) return;
-            const item = state.berita.find((x) => Number(x.id_berita) === Number(id));
+            const item = state.berita.find(function (x) { return Number(x.id_berita) === Number(id); });
             if (!item) return;
             const form = document.getElementById('form-berita');
             if (!form) return;
@@ -2714,10 +2887,10 @@ END $$;`;
                         return;
                     }
                 }
-                state.berita = state.berita.map((b) => Number(b.id_berita) === editId ? Object.assign({}, b, localRecord) : b);
+                state.berita = state.berita.map(function (b) { return Number(b.id_berita) === editId ? Object.assign({}, b, localRecord) : b; });
                 showToast('Berita kegiatan diperbarui.');
             } else {
-                const nextId = state.berita.reduce((m, x) => Math.max(m, Number(x.id_berita) || 0), 0) + 1;
+                const nextId = state.berita.reduce(function (m, x) { return Math.max(m, Number(x.id_berita) || 0); }, 0) + 1;
                 const item = Object.assign({ id_berita: nextId }, localRecord);
                 if (isSupabaseReady()) {
                     const created = await restRequest('berita_kegiatan', {
@@ -2745,7 +2918,7 @@ END $$;`;
 
         function startEditPengurus(id) {
             if (!requireManagerAccess()) return;
-            const item = state.pengurus.find((x) => Number(x.id_pengurus) === Number(id));
+            const item = state.pengurus.find(function (x) { return Number(x.id_pengurus) === Number(id); });
             if (!item) return;
             const form = document.getElementById('form-pengurus');
             if (!form) return;
@@ -2764,7 +2937,8 @@ END $$;`;
             form.hak_akses.value = item.hak_akses || 'Operator Lapangan';
             document.getElementById('form-pengurus-title').textContent = 'Edit Pengurus';
             document.getElementById('btn-submit-pengurus-label').textContent = 'Perbarui Pengurus';
-            document.getElementById('btn-cancel-edit-pengurus')?.classList.remove('hidden');
+            const cancelBtn = document.getElementById('btn-cancel-edit-pengurus');
+            if (cancelBtn) cancelBtn.classList.remove('hidden');
             form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
@@ -2777,7 +2951,8 @@ END $$;`;
             if (title) title.textContent = 'Tambah Pengurus';
             const lbl = document.getElementById('btn-submit-pengurus-label');
             if (lbl) lbl.textContent = 'Simpan Pengurus';
-            document.getElementById('btn-cancel-edit-pengurus')?.classList.add('hidden');
+            const cancelBtn = document.getElementById('btn-cancel-edit-pengurus');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
         }
 
         async function handleSubmitPengurus(e) {
@@ -2809,10 +2984,10 @@ END $$;`;
                         return;
                     }
                 }
-                state.pengurus = state.pengurus.map((p) => Number(p.id_pengurus) === editId ? Object.assign({}, p, payload) : p);
+                state.pengurus = state.pengurus.map(function (p) { return Number(p.id_pengurus) === editId ? Object.assign({}, p, payload) : p; });
                 showToast('Data pengurus diperbarui.');
             } else {
-                const nextId = state.pengurus.reduce((m, x) => Math.max(m, Number(x.id_pengurus) || 0), 0) + 1;
+                const nextId = state.pengurus.reduce(function (m, x) { return Math.max(m, Number(x.id_pengurus) || 0); }, 0) + 1;
                 const item = Object.assign({ id_pengurus: nextId }, payload);
                 if (isSupabaseReady()) {
                     const created = await restRequest('pengurus', { method: 'POST', body: payload });
@@ -2860,7 +3035,7 @@ END $$;`;
                 }
             }
 
-            state[collection] = state[collection].filter((row) => Number(row[pkMap[collection]]) !== targetId);
+            state[collection] = state[collection].filter(function (row) { return Number(row[pkMap[collection]]) !== targetId; });
             saveState();
             renderAllViews();
             showToast('Data dihapus.');
@@ -2879,7 +3054,10 @@ END $$;`;
         }
 
         function formatCsvRow(values) {
-            return values.map((v) => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',');
+            return values.map(function (v) {
+                const s = (v === null || v === undefined) ? '' : String(v);
+                return '"' + s.replace(/"/g, '""') + '"';
+            }).join(',');
         }
 
         function triggerCsvDownload(csvText, filename, label) {
@@ -2898,58 +3076,70 @@ END $$;`;
         function buildSourceCsv(source) {
             if (source === 'distrik') {
                 const headers = ['id_distrik', 'kode_wilayah', 'nama_distrik', 'pusat_distrik', 'potensi_unggulan', 'jumlah_kelompok'];
-                const lines = DISTRIK_25.map((d) => {
-                    const cnt = state.kelompok.filter((k) => Number(k.id_distrik) === Number(d.id)).length;
+                const lines = DISTRIK_25.map(function (d) {
+                    const cnt = state.kelompok.filter(function (k) { return Number(k.id_distrik) === Number(d.id); }).length;
                     return formatCsvRow([d.id, d.kode, d.nama, d.pusat, d.potensi, cnt]);
                 });
-                return { headers, lines, filename: 'hkti-dpc-asmat-25-distrik.csv', label: '25 distrik' };
+                return { headers: headers, lines: lines, filename: 'hkti-dpc-asmat-25-distrik.csv', label: '25 distrik' };
             }
             if (source === 'kendala') {
                 const headers = ['id_kendala', 'kode_distrik', 'nama_distrik', 'kategori_kendala', 'deskripsi', 'tingkat_urgensi', 'status_tindak_lanjut'];
-                const lines = state.kendala.map((r) => {
+                const lines = state.kendala.map(function (r) {
                     const d = getDistrikById(r.id_distrik);
                     return formatCsvRow([r.id_kendala, d.kode, d.nama, r.kategori_kendala, r.deskripsi, r.tingkat_urgensi, r.status_tindak_lanjut]);
                 });
-                return { headers, lines, filename: 'hkti-dpc-asmat-kendala-infrastruktur.csv', label: 'kendala infrastruktur' };
+                return { headers: headers, lines: lines, filename: 'hkti-dpc-asmat-kendala-infrastruktur.csv', label: 'kendala infrastruktur' };
             }
             if (source === 'program') {
                 const headers = ['id_program', 'nama_program', 'sumber_mitra', 'kode_distrik', 'nama_distrik', 'kelompok_penerima', 'tahun_jadwal', 'status_penyaluran'];
-                const lines = state.program.map((r) => {
+                const lines = state.program.map(function (r) {
                     const d = getDistrikById(r.id_distrik);
                     return formatCsvRow([r.id_program, r.nama_program, r.sumber_mitra, d.kode, d.nama, r.kelompok_penerima, r.tahun_jadwal, r.status_penyaluran]);
                 });
-                return { headers, lines, filename: 'hkti-dpc-asmat-program-bantuan.csv', label: 'program & bantuan' };
+                return { headers: headers, lines: lines, filename: 'hkti-dpc-asmat-program-bantuan.csv', label: 'program & bantuan' };
             }
             if (source === 'berita') {
                 const headers = ['id_berita', 'judul', 'tanggal_kegiatan', 'kategori', 'kode_distrik', 'nama_distrik', 'penulis', 'ringkasan', 'url_dokumentasi', 'status_publikasi'];
-                const lines = state.berita.map((b) => {
+                const lines = state.berita.map(function (b) {
                     const d = getDistrikById(b.id_distrik);
                     return formatCsvRow([b.id_berita, b.judul, b.tanggal, b.kategori, d.kode, d.nama, b.penulis || '', b.ringkasan, b.url_dokumentasi || b.url_berita || '', b.status_publikasi || 'Terbit']);
                 });
-                return { headers, lines, filename: 'hkti-dpc-asmat-berita-kegiatan.csv', label: 'berita kegiatan' };
+                return { headers: headers, lines: lines, filename: 'hkti-dpc-asmat-berita-kegiatan.csv', label: 'berita kegiatan' };
             }
             if (source === 'pengurus') {
                 const headers = ['id_pengurus', 'tingkatan', 'nama_lengkap', 'jenis_kelamin', 'no_hp_wa', 'email', 'kode_distrik', 'nama_distrik', 'kampung', 'jabatan', 'bidang', 'periode_sk', 'status_kepengurusan', 'hak_akses'];
-                const sortedPengurus = [...state.pengurus].sort(comparePengurusByJabatan);
-                const lines = sortedPengurus.map((p) => {
+                const sortedPengurus = state.pengurus.slice().sort(comparePengurusByJabatan);
+                const lines = sortedPengurus.map(function (p) {
                     const d = p.id_distrik ? getDistrikById(p.id_distrik) : null;
                     return formatCsvRow([p.id_pengurus, p.tingkatan, p.nama_lengkap, p.jenis_kelamin, p.no_hp_wa, p.email || '', d ? d.kode : '', d ? d.nama : '', p.kampung || '', p.jabatan, p.bidang || '', p.periode_sk || '', p.status_kepengurusan, p.hak_akses]);
                 });
-                return { headers, lines, filename: 'hkti-dpc-asmat-pengurus.csv', label: 'pengurus' };
+                return { headers: headers, lines: lines, filename: 'hkti-dpc-asmat-pengurus.csv', label: 'pengurus' };
             }
 
-            const headers = ['nama_kelompok', 'kode_distrik', 'nama_distrik', 'kampung', 'komoditas_utama', 'jumlah_anggota', 'ketua_kelompok', 'no_hp_wa', 'status_aktif'];
-            const lines = state.kelompok.map((k) => {
+            const headers = ['nama_kelompok', 'jenis_kelompok', 'kode_distrik', 'nama_distrik', 'kampung', 'komoditas_utama', 'jumlah_anggota', 'ketua_kelompok', 'status_pendampingan'];
+            const lines = state.kelompok.map(function (k) {
                 const d = getDistrikById(k.id_distrik);
-                return formatCsvRow([k.nama_kelompok, d.kode, d.nama, k.kampung, k.komoditas_utama, k.jumlah_anggota, k.ketua_kelompok, k.no_hp_wa, k.status_aktif]);
+                const komoditasVal = k.komoditas_utama || '';
+                return formatCsvRow([
+                    k.nama_kelompok,
+                    normalizeJenisKelompok(k.jenis_kelompok, komoditasVal),
+                    d.kode,
+                    d.nama,
+                    k.kampung,
+                    komoditasVal,
+                    k.jumlah_anggota,
+                    k.nama_ketua || k.ketua_kelompok || '',
+                    k.status_pendampingan || k.status_aktif || 'Terdata'
+                ]);
             });
-            return { headers, lines, filename: 'hkti-dpc-asmat-kelompok.csv', label: 'kelompok usaha' };
+            return { headers: headers, lines: lines, filename: 'hkti-dpc-asmat-kelompok.csv', label: 'kelompok usaha' };
         }
 
         function exportSelectedCsv() {
-            const source = document.getElementById('csv-source-select')?.value || 'kelompok';
+            const selEl = document.getElementById('csv-source-select');
+            const source = selEl ? selEl.value : 'kelompok';
             const built = buildSourceCsv(source);
-            triggerCsvDownload([[built.headers.join(',')], ...built.lines].join('\n'), built.filename, built.label);
+            triggerCsvDownload([[built.headers.join(',')].concat(built.lines)].join('\n'), built.filename, built.label);
         }
 
         function parseCsvLine(line) {
@@ -2976,9 +3166,10 @@ END $$;`;
             return out;
         }
 
-        function stripOptionalLeadingId(cols, firstFieldMustBeText = true) {
+        function stripOptionalLeadingId(cols, firstFieldMustBeText) {
+            const checkText = firstFieldMustBeText !== false;
             if (!cols.length) return cols;
-            if (firstFieldMustBeText && /^\d+$/.test(cols[0]) && cols.length >= 4) {
+            if (checkText && /^\d+$/.test(cols[0]) && cols.length >= 4) {
                 return cols.slice(1);
             }
             return cols;
@@ -2986,8 +3177,8 @@ END $$;`;
 
         async function syncImportedRowsToTable(tableName, payloads) {
             if (!isSupabaseReady() || !payloads.length) return;
-            for (const row of payloads) {
-                await restRequest(tableName, { method: 'POST', body: row });
+            for (let i = 0; i < payloads.length; i++) {
+                await restRequest(tableName, { method: 'POST', body: payloads[i] });
             }
         }
 
@@ -2996,21 +3187,22 @@ END $$;`;
                 e.target.value = '';
                 return;
             }
-            const source = document.getElementById('csv-source-select')?.value || 'kelompok';
+            const selEl = document.getElementById('csv-source-select');
+            const source = selEl ? selEl.value : 'kelompok';
             if (source === 'distrik') {
                 showToast('Data 25 distrik bersifat acuan baku (91.18).', true);
                 e.target.value = '';
                 return;
             }
 
-            const file = e.target?.files?.[0];
+            const file = e && e.target && e.target.files ? e.target.files[0] : null;
             if (!file) return;
 
             const reader = new FileReader();
             reader.onload = async function (evt) {
                 try {
-                    const text = String(evt.target?.result || '').replace(/^\uFEFF/, '');
-                    const rawLines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+                    const text = String((evt && evt.target && evt.target.result) || '').replace(/^\uFEFF/, '');
+                    const rawLines = text.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
                     if (rawLines.length < 2) {
                         showToast('File CSV kosong atau tidak valid.', true);
                         return;
@@ -3023,20 +3215,39 @@ END $$;`;
                         for (let i = 1; i < rawLines.length; i++) {
                             const cols = parseCsvLine(rawLines[i]);
                             if (!cols[0]) continue;
-                            const idDist = resolveDistrikId(cols[1] || cols[2], 1);
-                            const nextId = state.kelompok.reduce((m, x) => Math.max(m, Number(x.id_kelompok) || 0), 0) + 1;
-                            const payload = {
+                            const hasJenisCol = ALLOWED_JENIS_KELOMPOK.some(function (j) {
+                                return j.toLowerCase() === String(cols[1] || '').trim().toLowerCase();
+                            });
+                            const komoditasVal = hasJenisCol ? (cols[5] || 'Sagu') : (cols[4] || 'Sagu');
+                            const jenisVal = hasJenisCol
+                                ? normalizeJenisKelompok(cols[1], komoditasVal)
+                                : normalizeJenisKelompok('', komoditasVal);
+                            const idDist = hasJenisCol
+                                ? resolveDistrikId(cols[2] || cols[3], 1)
+                                : resolveDistrikId(cols[1] || cols[2], 1);
+                            const kampungVal = hasJenisCol ? (cols[4] || 'Kampung Asmat') : (cols[3] || 'Kampung Asmat');
+                            const anggotaVal = hasJenisCol ? Math.max(1, Number(cols[6] || 10)) : Math.max(1, Number(cols[5] || 10));
+                            const ketuaVal = hasJenisCol ? (cols[7] || 'Ketua Kelompok') : (cols[6] || 'Ketua Kelompok');
+                            const statusVal = hasJenisCol ? (cols[8] || 'Terdata') : (cols[8] || 'Terdata');
+
+                            const nextId = state.kelompok.reduce(function (m, x) { return Math.max(m, Number(x.id_kelompok) || 0); }, 0) + 1;
+                            const supPayload = {
                                 nama_kelompok: cols[0],
+                                jenis_kelompok: jenisVal,
                                 id_distrik: idDist,
-                                kampung: cols[3] || 'Kampung Asmat',
-                                komoditas_utama: cols[4] || 'Sagu',
-                                jumlah_anggota: Math.max(1, Number(cols[5] || 10)),
-                                ketua_kelompok: cols[6] || 'Ketua Kelompok',
-                                no_hp_wa: cols[7] || '',
-                                status_aktif: cols[8] || 'Aktif'
+                                kampung: kampungVal,
+                                komoditas_utama: komoditasVal,
+                                jumlah_anggota: anggotaVal,
+                                nama_ketua: ketuaVal,
+                                status_pendampingan: statusVal
                             };
-                            state.kelompok.unshift(Object.assign({ id_kelompok: nextId }, payload));
-                            supabasePayloads.push(payload);
+                            const locRecord = Object.assign({ id_kelompok: nextId }, supPayload, {
+                                ketua_kelompok: ketuaVal,
+                                no_hp_wa: '',
+                                status_aktif: statusVal
+                            });
+                            state.kelompok.unshift(locRecord);
+                            supabasePayloads.push(supPayload);
                             added++;
                         }
                         await syncImportedRowsToTable('kelompok_usaha', supabasePayloads);
@@ -3046,11 +3257,11 @@ END $$;`;
                             const idDist = resolveDistrikId(cols[0] || cols[1], 1);
                             const deskripsi = cols[3] || cols[2] || '';
                             if (!deskripsi) continue;
-                            const nextId = state.kendala.reduce((m, x) => Math.max(m, Number(x.id_kendala) || 0), 0) + 1;
+                            const nextId = state.kendala.reduce(function (m, x) { return Math.max(m, Number(x.id_kendala) || 0); }, 0) + 1;
                             const payload = {
                                 id_distrik: idDist,
                                 kategori_kendala: cols[2] || 'BBM & Transportasi Air',
-                                deskripsi,
+                                deskripsi: deskripsi,
                                 tingkat_urgensi: cols[4] || 'Sedang',
                                 status_tindak_lanjut: cols[5] || 'Terdata'
                             };
@@ -3064,7 +3275,7 @@ END $$;`;
                             const cols = stripOptionalLeadingId(parseCsvLine(rawLines[i]), true);
                             if (!cols[0]) continue;
                             const idDist = resolveDistrikId(cols[2] || cols[3], 1);
-                            const nextId = state.program.reduce((m, x) => Math.max(m, Number(x.id_program) || 0), 0) + 1;
+                            const nextId = state.program.reduce(function (m, x) { return Math.max(m, Number(x.id_program) || 0); }, 0) + 1;
                             const payload = {
                                 nama_program: cols[0],
                                 sumber_mitra: cols[1] || 'HKTI DPC Asmat',
@@ -3086,7 +3297,7 @@ END $$;`;
                             const tanggalVal = cols[1] || new Date().toISOString().slice(0, 10);
                             const narasiVal = cols[6] || cols[0];
                             const urlDocVal = sanitizeNewsUrl(cols[7] || '');
-                            const nextId = state.berita.reduce((m, x) => Math.max(m, Number(x.id_berita) || 0), 0) + 1;
+                            const nextId = state.berita.reduce(function (m, x) { return Math.max(m, Number(x.id_berita) || 0); }, 0) + 1;
                             const localItem = {
                                 id_berita: nextId,
                                 judul: cols[0],
@@ -3119,15 +3330,15 @@ END $$;`;
                         for (let i = 1; i < rawLines.length; i++) {
                             const cols = stripOptionalLeadingId(parseCsvLine(rawLines[i]), false);
                             const tingkatanRaw = String(cols[0] || 'DPC').toUpperCase();
-                            const tingkatan = ['DPC', 'PAC', 'DPRT'].includes(tingkatanRaw) ? tingkatanRaw : 'DPC';
+                            const tingkatan = ['DPC', 'PAC', 'DPRT'].indexOf(tingkatanRaw) !== -1 ? tingkatanRaw : 'DPC';
                             const namaLengkap = cols[1] || '';
                             if (!namaLengkap) continue;
                             const jkRaw = String(cols[2] || 'L').toUpperCase();
                             const jenisKelamin = jkRaw === 'P' ? 'P' : 'L';
                             const idDist = (cols[5] || cols[6]) ? resolveDistrikId(cols[5] || cols[6], 1) : null;
-                            const nextId = state.pengurus.reduce((m, x) => Math.max(m, Number(x.id_pengurus) || 0), 0) + 1;
+                            const nextId = state.pengurus.reduce(function (m, x) { return Math.max(m, Number(x.id_pengurus) || 0); }, 0) + 1;
                             const payload = {
-                                tingkatan,
+                                tingkatan: tingkatan,
                                 nama_lengkap: namaLengkap,
                                 jenis_kelamin: jenisKelamin,
                                 no_hp_wa: cols[3] || '082349960907',
