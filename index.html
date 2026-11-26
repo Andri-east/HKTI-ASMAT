@@ -438,7 +438,7 @@
                             </div>
                             <div>
                                 <h2 id="form-kendala-title" class="font-display text-lg font-bold text-slate-900">Catat Kendala Infrastruktur</h2>
-                                <p class="text-xs text-slate-500">BBM, transportasi air, cold storage, sinyal &amp; modal</p>
+                                <p class="text-xs text-slate-500">Cakupan per Kelompok Usaha atau PAC / Distrik</p>
                             </div>
                         </div>
                         <button type="button" id="btn-cancel-edit-kendala" onclick="resetKendalaForm()" class="hidden px-2.5 py-1.5 rounded-lg bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer">Batal Edit</button>
@@ -448,8 +448,11 @@
                         <input type="hidden" name="edit_id" id="kendala-edit-id" value="" />
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                                <label class="block font-semibold text-slate-700 mb-1">Distrik *</label>
-                                <select id="select-distrik-kendala" name="id_distrik" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none"></select>
+                                <label class="block font-semibold text-slate-700 mb-1">Cakupan Kendala *</label>
+                                <select id="select-cakupan-kendala" name="cakupan_kendala" onchange="onCakupanKendalaChange()" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                                    <option value="KELOMPOK">Kelompok Usaha</option>
+                                    <option value="DISTRIK">PAC / Tingkat Distrik</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Kategori Kendala *</label>
@@ -462,9 +465,26 @@
                                 </select>
                             </div>
                         </div>
+
+                        <div id="wrap-kelompok-kendala">
+                            <label class="block font-semibold text-slate-700 mb-1">Kelompok Usaha *</label>
+                            <select id="select-kelompok-kendala" name="id_kelompok" onchange="onKelompokKendalaChange()" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none"></select>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold text-slate-700 mb-1">Distrik (91.18) *</label>
+                                <select id="select-distrik-kendala" name="id_distrik" required class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label id="label-kampung-kendala" class="block font-semibold text-slate-700 mb-1">Kampung / Lokasi</label>
+                                <input type="text" id="input-kampung-kendala" name="kampung" placeholder="Nama kampung / titik lokasi" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block font-semibold text-slate-700 mb-1">Deskripsi Kendala Lapangan *</label>
-                            <textarea name="deskripsi" rows="3" required placeholder="Uraikan kondisi lapangan di distrik/kampung..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none"></textarea>
+                            <textarea name="deskripsi" rows="3" required placeholder="Uraikan kondisi lapangan di kelompok/kampung/distrik..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none"></textarea>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
@@ -495,15 +515,25 @@
                 <div id="kendala-list-wrapper" class="lg:col-span-12 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Pemetaan Lapangan</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Pemetaan Lapangan • Kelompok &amp; PAC Distrik</span>
                             <h2 class="font-display text-lg font-bold text-slate-900">Daftar Kendala &amp; Infrastruktur</h2>
                         </div>
-                        <select id="filter-prioritas-kendala" onchange="renderKendalaList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
-                            <option value="SEMUA">Semua Urgensi</option>
-                            <option value="Tinggi">Urgensi Tinggi</option>
-                            <option value="Sedang">Urgensi Sedang</option>
-                            <option value="Rendah">Urgensi Rendah</option>
-                        </select>
+                        <div class="flex flex-wrap gap-2">
+                            <select id="filter-cakupan-kendala" onchange="renderKendalaList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                                <option value="SEMUA">Semua Cakupan</option>
+                                <option value="KELOMPOK">Per Kelompok Usaha</option>
+                                <option value="DISTRIK">PAC / Tingkat Distrik</option>
+                            </select>
+                            <select id="filter-distrik-kendala" onchange="renderKendalaList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                                <option value="SEMUA">Semua 25 Distrik</option>
+                            </select>
+                            <select id="filter-prioritas-kendala" onchange="renderKendalaList()" class="touch-target px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-700">
+                                <option value="SEMUA">Semua Urgensi</option>
+                                <option value="Tinggi">Urgensi Tinggi</option>
+                                <option value="Sedang">Urgensi Sedang</option>
+                                <option value="Rendah">Urgensi Rendah</option>
+                            </select>
+                        </div>
                     </div>
                     <div id="kendala-list" class="space-y-3"></div>
                 </div>
@@ -1002,6 +1032,13 @@
         const ALLOWED_JENIS_KELOMPOK = ['Pertanian', 'Perikanan', 'Peternakan', 'Perkebunan', 'Kehutanan'];
         let activeKelompokModalId = null;
 
+        function normalizeCakupanKendala(rawCakupan, idKelompok) {
+            const c = String(rawCakupan || '').trim().toUpperCase();
+            if (c === 'DISTRIK') return 'DISTRIK';
+            if (c === 'KELOMPOK') return 'KELOMPOK';
+            return idKelompok ? 'KELOMPOK' : 'DISTRIK';
+        }
+
         function normalizeJenisKelompok(rawJenis, komoditasText) {
             const direct = String(rawJenis || '').trim();
             for (let i = 0; i < ALLOWED_JENIS_KELOMPOK.length; i++) {
@@ -1185,13 +1222,36 @@ CREATE TABLE IF NOT EXISTS anggota_kelompok (
 
 CREATE TABLE IF NOT EXISTS kendala_infrastruktur (
     id_kendala SERIAL PRIMARY KEY,
+    cakupan_kendala VARCHAR(20) NOT NULL DEFAULT 'DISTRIK' CHECK (cakupan_kendala IN ('KELOMPOK', 'DISTRIK')),
+    id_kelompok INT REFERENCES kelompok_usaha(id_kelompok) ON DELETE SET NULL,
     id_distrik INT NOT NULL REFERENCES distrik(id_distrik),
+    kampung VARCHAR(120),
     kategori_kendala VARCHAR(80) NOT NULL,
     deskripsi TEXT NOT NULL,
     tingkat_urgensi VARCHAR(20) NOT NULL DEFAULT 'Sedang',
     status_tindak_lanjut VARCHAR(50) NOT NULL DEFAULT 'Terdata',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_kendala_cakupan CHECK (
+        (cakupan_kendala = 'KELOMPOK' AND id_kelompok IS NOT NULL)
+        OR
+        (cakupan_kendala = 'DISTRIK' AND id_kelompok IS NULL)
+    )
 );
+
+ALTER TABLE public.kendala_infrastruktur
+    ADD COLUMN IF NOT EXISTS cakupan_kendala VARCHAR(20) NOT NULL DEFAULT 'DISTRIK',
+    ADD COLUMN IF NOT EXISTS id_kelompok INT REFERENCES public.kelompok_usaha(id_kelompok) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS kampung VARCHAR(120);
+
+ALTER TABLE public.kendala_infrastruktur
+    DROP CONSTRAINT IF EXISTS chk_kendala_cakupan;
+
+ALTER TABLE public.kendala_infrastruktur
+    ADD CONSTRAINT chk_kendala_cakupan CHECK (
+        (cakupan_kendala = 'KELOMPOK' AND id_kelompok IS NOT NULL)
+        OR
+        (cakupan_kendala = 'DISTRIK' AND id_kelompok IS NULL)
+    );
 
 CREATE TABLE IF NOT EXISTS program_bantuan (
     id_program SERIAL PRIMARY KEY,
@@ -1361,7 +1421,10 @@ NOTIFY pgrst, 'reload schema';`;
                 kendala: [
                     {
                         id_kendala: 1,
+                        cakupan_kendala: 'KELOMPOK',
+                        id_kelompok: 2,
                         id_distrik: 2,
+                        kampung: 'Atsj',
                         kategori_kendala: 'BBM & Transportasi Air',
                         deskripsi: 'Keterbatasan pasokan BBM pertalite/solar untuk perahu motor tempel pengangkut hasil tangkapan dari Atsj menuju pusat pasar di Agats.',
                         tingkat_urgensi: 'Tinggi',
@@ -2158,10 +2221,19 @@ NOTIFY pgrst, 'reload schema';`;
             }
 
             if (rKendala.ok && Array.isArray(rKendala.data)) {
+                const localKenById = new Map(state.kendala.map(function (item) { return [Number(item.id_kendala), item]; }));
                 state.kendala = rKendala.data.map(function (item) {
+                    const prev = localKenById.get(Number(item.id_kendala));
+                    const rawKelId = item.id_kelompok !== undefined && item.id_kelompok !== null ? Number(item.id_kelompok) : (prev && prev.id_kelompok ? Number(prev.id_kelompok) : null);
+                    const cakupanVal = normalizeCakupanKendala(item.cakupan_kendala || (prev && prev.cakupan_kendala), rawKelId);
+                    const idKelVal = cakupanVal === 'KELOMPOK' ? rawKelId : null;
+                    const linkedKel = idKelVal ? state.kelompok.find(function (k) { return Number(k.id_kelompok) === Number(idKelVal); }) : null;
                     return {
                         id_kendala: Number(item.id_kendala),
+                        cakupan_kendala: cakupanVal,
+                        id_kelompok: idKelVal,
                         id_distrik: Number(item.id_distrik),
+                        kampung: item.kampung || (prev && prev.kampung) || (linkedKel ? linkedKel.kampung : ''),
                         kategori_kendala: item.kategori_kendala || 'BBM & Transportasi Air',
                         deskripsi: item.deskripsi || item.ringkasan_kendala || '-',
                         tingkat_urgensi: item.tingkat_urgensi || item.prioritas_penanganan || 'Sedang',
@@ -2229,6 +2301,7 @@ NOTIFY pgrst, 'reload schema';`;
 
             saveState();
             populateDistrictDropdowns();
+            populateKelompokKendalaDropdown();
             renderAllViews();
 
             const allOk = checks.every(function (pair) { return pair[1].ok; });
@@ -2371,6 +2444,12 @@ NOTIFY pgrst, 'reload schema';`;
             return { id: 0, kode: '91.18', nama: 'Kabupaten Asmat', pusat: 'Agats', potensi: '' };
         }
 
+        function getKelompokById(id) {
+            return (state.kelompok || []).find(function (k) {
+                return Number(k.id_kelompok) === Number(id);
+            }) || null;
+        }
+
         function resolveDistrikId(codeOrName, fallbackId) {
             const fb = fallbackId || 1;
             const needle = String(codeOrName || '').trim().toLowerCase();
@@ -2398,6 +2477,82 @@ NOTIFY pgrst, 'reload schema';`;
             if (e && e.target && e.target.id === id) closeModal(id);
         }
 
+        function populateKelompokKendalaDropdown() {
+            const sel = document.getElementById('select-kelompok-kendala');
+            if (!sel) return;
+            const prev = sel.value;
+            const list = (state.kelompok || []).slice().sort(function (a, b) {
+                return String(a.nama_kelompok || '').localeCompare(String(b.nama_kelompok || ''), 'id', { sensitivity: 'base' });
+            });
+            let html = '<option value="">-- Pilih Kelompok Usaha --</option>';
+            list.forEach(function (k) {
+                const d = getDistrikById(k.id_distrik);
+                const meta = d.nama + (k.kampung ? ' • ' + k.kampung : '');
+                html += '<option value="' + k.id_kelompok + '">' + escapeHtml(k.nama_kelompok + ' (' + meta + ')') + '</option>';
+            });
+            sel.innerHTML = html;
+            if (prev && list.some(function (k) { return String(k.id_kelompok) === String(prev); })) {
+                sel.value = prev;
+            }
+        }
+
+        function onKelompokKendalaChange() {
+            const cakupanEl = document.getElementById('select-cakupan-kendala');
+            if (cakupanEl && cakupanEl.value !== 'KELOMPOK') return;
+            const selKel = document.getElementById('select-kelompok-kendala');
+            const selDist = document.getElementById('select-distrik-kendala');
+            const inpKamp = document.getElementById('input-kampung-kendala');
+            if (!selKel || !selKel.value) return;
+
+            const kel = getKelompokById(selKel.value);
+            if (!kel) return;
+
+            if (selDist && kel.id_distrik) {
+                selDist.value = String(kel.id_distrik);
+            }
+            if (inpKamp && kel.kampung) {
+                inpKamp.value = kel.kampung;
+            }
+        }
+
+        function onCakupanKendalaChange(preserveKampung) {
+            const cakupanEl = document.getElementById('select-cakupan-kendala');
+            const wrapKel = document.getElementById('wrap-kelompok-kendala');
+            const selKel = document.getElementById('select-kelompok-kendala');
+            const labelKamp = document.getElementById('label-kampung-kendala');
+            const inpKamp = document.getElementById('input-kampung-kendala');
+            const selDist = document.getElementById('select-distrik-kendala');
+            if (!cakupanEl) return;
+
+            const cakupan = normalizeCakupanKendala(cakupanEl.value, selKel && selKel.value ? Number(selKel.value) : null);
+            cakupanEl.value = cakupan;
+
+            if (cakupan === 'KELOMPOK') {
+                if (wrapKel) wrapKel.classList.remove('hidden');
+                if (selKel) {
+                    selKel.required = true;
+                    if (!selKel.value && state.kelompok && state.kelompok.length > 0) {
+                        selKel.value = String(state.kelompok[0].id_kelompok);
+                    }
+                    const kel = selKel.value ? getKelompokById(selKel.value) : null;
+                    if (kel) {
+                        if (selDist && kel.id_distrik) selDist.value = String(kel.id_distrik);
+                        if (inpKamp && !preserveKampung) inpKamp.value = kel.kampung || '';
+                    }
+                }
+                if (labelKamp) labelKamp.textContent = 'Kampung Kelompok';
+                if (inpKamp) inpKamp.placeholder = 'Nama kampung kelompok';
+            } else {
+                if (wrapKel) wrapKel.classList.add('hidden');
+                if (selKel) {
+                    selKel.required = false;
+                    selKel.value = '';
+                }
+                if (labelKamp) labelKamp.textContent = 'Kampung / Pusat PAC (Opsional)';
+                if (inpKamp) inpKamp.placeholder = 'Kosongkan untuk tingkat PAC Distrik atau isi nama kampung';
+            }
+        }
+
         function populateDistrictDropdowns() {
             const ids = ['select-distrik-kelompok', 'select-distrik-kendala', 'select-distrik-program', 'select-distrik-pengurus', 'select-distrik-berita'];
             ids.forEach(function (id) {
@@ -2422,6 +2577,17 @@ NOTIFY pgrst, 'reload schema';`;
                 });
                 filterKelompok.innerHTML = opts;
                 filterKelompok.value = prevFilter;
+            }
+
+            const filterKendalaDistrik = document.getElementById('filter-distrik-kendala');
+            if (filterKendalaDistrik) {
+                const prevFilterKendala = filterKendalaDistrik.value || 'SEMUA';
+                let opts = '<option value="SEMUA">Semua 25 Distrik</option>';
+                DISTRIK_25.forEach(function (d) {
+                    opts += '<option value="' + d.id + '">' + escapeHtml(d.kode + ' ' + d.nama) + '</option>';
+                });
+                filterKendalaDistrik.innerHTML = opts;
+                filterKendalaDistrik.value = prevFilterKendala;
             }
 
             const filterPengurus = document.getElementById('filter-distrik-pengurus');
@@ -2602,24 +2768,47 @@ NOTIFY pgrst, 'reload schema';`;
             const box = document.getElementById('kendala-list');
             if (!box) return;
             const prioEl = document.getElementById('filter-prioritas-kendala');
+            const cakupanEl = document.getElementById('filter-cakupan-kendala');
+            const distEl = document.getElementById('filter-distrik-kendala');
+
             const prio = prioEl ? prioEl.value : 'SEMUA';
-            const rows = state.kendala.filter(function (item) { return prio === 'SEMUA' || item.tingkat_urgensi === prio; });
+            const cakupanFilter = cakupanEl ? cakupanEl.value : 'SEMUA';
+            const distrikFilter = distEl ? distEl.value : 'SEMUA';
+
+            const rows = state.kendala.filter(function (item) {
+                const itemCakupan = normalizeCakupanKendala(item.cakupan_kendala, item.id_kelompok);
+                const okPrio = prio === 'SEMUA' || item.tingkat_urgensi === prio;
+                const okCakupan = cakupanFilter === 'SEMUA' || itemCakupan === cakupanFilter;
+                const okDistrik = distrikFilter === 'SEMUA' || Number(item.id_distrik) === Number(distrikFilter);
+                return okPrio && okCakupan && okDistrik;
+            });
 
             if (rows.length === 0) {
-                box.innerHTML = '<div class="p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-sm text-slate-500">Belum ada data kendala infrastruktur.</div>';
+                box.innerHTML = '<div class="p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-sm text-slate-500">Belum ada data kendala infrastruktur pada filter ini.</div>';
                 return;
             }
 
             box.innerHTML = rows.map(function (item) {
                 const d = getDistrikById(item.id_distrik);
+                const itemCakupan = normalizeCakupanKendala(item.cakupan_kendala, item.id_kelompok);
+                const kel = item.id_kelompok ? getKelompokById(item.id_kelompok) : null;
                 const badge = item.tingkat_urgensi === 'Tinggi' ? 'bg-rose-100 text-rose-800' : item.tingkat_urgensi === 'Rendah' ? 'bg-slate-200 text-slate-700' : 'bg-amber-100 text-amber-800';
+                const cakupanBadge = itemCakupan === 'KELOMPOK'
+                    ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-900">KELOMPOK: ' + escapeHtml(kel ? kel.nama_kelompok : ('#' + item.id_kelompok)) + '</span>'
+                    : '<span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-100 text-indigo-900">PAC / DISTRIK: ' + escapeHtml(d.nama) + '</span>';
+
+                const lokasiParts = [d.kode + ' ' + d.nama];
+                if (item.kampung) lokasiParts.push(item.kampung);
+                if (kel && kel.komoditas_utama) lokasiParts.push('Komoditas: ' + kel.komoditas_utama);
+
                 return (
                     '<div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">' +
                         '<div class="flex flex-wrap items-center justify-between gap-2">' +
                             '<div class="flex flex-wrap items-center gap-1.5">' +
+                                cakupanBadge +
                                 '<span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold ' + badge + '">Urgensi ' + escapeHtml(item.tingkat_urgensi) + '</span>' +
                                 '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200/80 text-slate-800">' + escapeHtml(item.kategori_kendala) + '</span>' +
-                                '<span class="text-xs font-bold text-hkti-dark">' + escapeHtml(d.kode + ' ' + d.nama) + '</span>' +
+                                '<span class="text-xs font-bold text-hkti-dark">' + escapeHtml(lokasiParts.join(' • ')) + '</span>' +
                             '</div>' +
                             '<div class="manager-only flex items-center gap-1.5">' +
                                 '<button type="button" onclick="startEditKendala(' + item.id_kendala + ')" class="touch-target px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold cursor-pointer"><i class="ph-bold ph-pencil-simple"></i></button>' +
@@ -2777,7 +2966,7 @@ NOTIFY pgrst, 'reload schema';`;
                 },
                 kendala: {
                     btn: 'Impor CSV Kendala Infrastruktur',
-                    hint: 'Kolom: kode_distrik, nama_distrik, kategori_kendala, deskripsi, tingkat_urgensi, status_tindak_lanjut'
+                    hint: 'Kolom: cakupan_kendala (KELOMPOK/DISTRIK), nama_kelompok, kode_distrik, nama_distrik, kampung, kategori_kendala, deskripsi, tingkat_urgensi, status_tindak_lanjut'
                 },
                 program: {
                     btn: 'Impor CSV Program & Bantuan',
@@ -2853,6 +3042,7 @@ NOTIFY pgrst, 'reload schema';`;
 
         function renderAllViews() {
             try { applyAuthUiMode(); } catch (e) {}
+            try { populateKelompokKendalaDropdown(); } catch (e) {}
             try { renderDistrikGrid(); } catch (e) {}
             try { renderKelompokList(); } catch (e) {}
             try { renderKendalaList(); } catch (e) {}
@@ -2997,12 +3187,24 @@ NOTIFY pgrst, 'reload schema';`;
             if (!item) return;
             const form = document.getElementById('form-kendala');
             if (!form) return;
+            populateKelompokKendalaDropdown();
+
+            const cakupan = normalizeCakupanKendala(item.cakupan_kendala, item.id_kelompok);
             document.getElementById('kendala-edit-id').value = item.id_kendala;
-            form.id_distrik.value = item.id_distrik;
+            form.cakupan_kendala.value = cakupan;
+            if (form.id_kelompok) {
+                form.id_kelompok.value = cakupan === 'KELOMPOK' && item.id_kelompok ? String(item.id_kelompok) : '';
+            }
+            form.id_distrik.value = item.id_distrik || 1;
+            if (form.kampung) {
+                form.kampung.value = item.kampung || '';
+            }
             form.kategori_kendala.value = item.kategori_kendala;
             form.deskripsi.value = item.deskripsi;
             form.tingkat_urgensi.value = item.tingkat_urgensi;
             form.status_tindak_lanjut.value = item.status_tindak_lanjut;
+
+            onCakupanKendalaChange(true);
             document.getElementById('form-kendala-title').textContent = 'Edit Kendala Infrastruktur';
             document.getElementById('btn-submit-kendala-label').textContent = 'Perbarui Kendala';
             const cancelBtn = document.getElementById('btn-cancel-edit-kendala');
@@ -3015,6 +3217,11 @@ NOTIFY pgrst, 'reload schema';`;
             if (form) form.reset();
             const eid = document.getElementById('kendala-edit-id');
             if (eid) eid.value = '';
+            const cakupanEl = document.getElementById('select-cakupan-kendala');
+            if (cakupanEl) cakupanEl.value = 'KELOMPOK';
+            populateKelompokKendalaDropdown();
+            onCakupanKendalaChange(false);
+
             const title = document.getElementById('form-kendala-title');
             if (title) title.textContent = 'Catat Kendala Infrastruktur';
             const lbl = document.getElementById('btn-submit-kendala-label');
@@ -3028,8 +3235,29 @@ NOTIFY pgrst, 'reload schema';`;
             if (!requireManagerAccess()) return;
             const fd = new FormData(e.target);
             const editId = Number(fd.get('edit_id') || 0);
+            const rawKelId = fd.get('id_kelompok');
+            const parsedKelId = rawKelId ? Number(rawKelId) : null;
+            const cakupan = normalizeCakupanKendala(fd.get('cakupan_kendala'), parsedKelId);
+
+            if (cakupan === 'KELOMPOK' && !parsedKelId) {
+                showToast('Pilih kelompok usaha untuk cakupan KELOMPOK.', true);
+                return;
+            }
+
+            const linkedKel = cakupan === 'KELOMPOK' ? getKelompokById(parsedKelId) : null;
+            const idKelompokFinal = cakupan === 'KELOMPOK' ? parsedKelId : null;
+            const idDistrikFinal = cakupan === 'KELOMPOK' && linkedKel && linkedKel.id_distrik
+                ? Number(linkedKel.id_distrik)
+                : Number(fd.get('id_distrik') || 1);
+
+            const rawKampung = String(fd.get('kampung') || '').trim();
+            const kampungFinal = rawKampung || (cakupan === 'KELOMPOK' && linkedKel ? (linkedKel.kampung || null) : null);
+
             const payload = {
-                id_distrik: Number(fd.get('id_distrik') || 1),
+                cakupan_kendala: cakupan,
+                id_kelompok: idKelompokFinal,
+                id_distrik: idDistrikFinal,
+                kampung: kampungFinal,
                 kategori_kendala: String(fd.get('kategori_kendala') || 'BBM & Transportasi Air'),
                 deskripsi: String(fd.get('deskripsi') || '').trim(),
                 tingkat_urgensi: String(fd.get('tingkat_urgensi') || 'Sedang'),
@@ -3424,10 +3652,24 @@ NOTIFY pgrst, 'reload schema';`;
                 return { headers: headers, lines: lines, filename: 'hkti-dpc-asmat-25-distrik.csv', label: '25 distrik' };
             }
             if (source === 'kendala') {
-                const headers = ['id_kendala', 'kode_distrik', 'nama_distrik', 'kategori_kendala', 'deskripsi', 'tingkat_urgensi', 'status_tindak_lanjut'];
+                const headers = ['id_kendala', 'cakupan_kendala', 'id_kelompok', 'nama_kelompok', 'kode_distrik', 'nama_distrik', 'kampung', 'kategori_kendala', 'deskripsi', 'tingkat_urgensi', 'status_tindak_lanjut'];
                 const lines = state.kendala.map(function (r) {
                     const d = getDistrikById(r.id_distrik);
-                    return formatCsvRow([r.id_kendala, d.kode, d.nama, r.kategori_kendala, r.deskripsi, r.tingkat_urgensi, r.status_tindak_lanjut]);
+                    const cakupanVal = normalizeCakupanKendala(r.cakupan_kendala, r.id_kelompok);
+                    const kel = cakupanVal === 'KELOMPOK' && r.id_kelompok ? getKelompokById(r.id_kelompok) : null;
+                    return formatCsvRow([
+                        r.id_kendala,
+                        cakupanVal,
+                        cakupanVal === 'KELOMPOK' ? (r.id_kelompok || '') : '',
+                        kel ? kel.nama_kelompok : '',
+                        d.kode,
+                        d.nama,
+                        r.kampung || '',
+                        r.kategori_kendala,
+                        r.deskripsi,
+                        r.tingkat_urgensi,
+                        r.status_tindak_lanjut
+                    ]);
                 });
                 return { headers: headers, lines: lines, filename: 'hkti-dpc-asmat-kendala-infrastruktur.csv', label: 'kendala infrastruktur' };
             }
@@ -3523,6 +3765,20 @@ NOTIFY pgrst, 'reload schema';`;
             }
         }
 
+        function resolveKelompokIdForImport(rawIdOrName) {
+            const needle = String(rawIdOrName || '').trim();
+            if (!needle) return null;
+            if (/^\d+$/.test(needle)) {
+                const byId = getKelompokById(Number(needle));
+                if (byId) return Number(byId.id_kelompok);
+            }
+            const lower = needle.toLowerCase();
+            const byName = (state.kelompok || []).find(function (k) {
+                return String(k.nama_kelompok || '').trim().toLowerCase() === lower;
+            });
+            return byName ? Number(byName.id_kelompok) : null;
+        }
+
         function importSelectedCsv(e) {
             if (!requireManagerAccess()) {
                 e.target.value = '';
@@ -3594,17 +3850,52 @@ NOTIFY pgrst, 'reload schema';`;
                         await syncImportedRowsToTable('kelompok_usaha', supabasePayloads);
                     } else if (source === 'kendala') {
                         for (let i = 1; i < rawLines.length; i++) {
-                            const cols = stripOptionalLeadingId(parseCsvLine(rawLines[i]), false);
-                            const idDist = resolveDistrikId(cols[0] || cols[1], 1);
-                            const deskripsi = cols[3] || cols[2] || '';
+                            const rawCols = parseCsvLine(rawLines[i]);
+                            const firstUpper = String(rawCols[0] || '').trim().toUpperCase();
+                            const hasCakupanCol = firstUpper === 'KELOMPOK' || firstUpper === 'DISTRIK';
+                            const cols = hasCakupanCol ? rawCols : stripOptionalLeadingId(rawCols, false);
+
+                            let cakupanVal = 'DISTRIK';
+                            let idKelVal = null;
+                            let idDist = 1;
+                            let kampungVal = null;
+                            let kategoriVal = 'BBM & Transportasi Air';
+                            let deskripsi = '';
+                            let urgensiVal = 'Sedang';
+                            let statusVal = 'Terdata';
+
+                            if (hasCakupanCol) {
+                                cakupanVal = normalizeCakupanKendala(cols[0], null);
+                                idKelVal = cakupanVal === 'KELOMPOK' ? resolveKelompokIdForImport(cols[1] || cols[2]) : null;
+                                const linkedKel = idKelVal ? getKelompokById(idKelVal) : null;
+                                idDist = linkedKel && linkedKel.id_distrik ? Number(linkedKel.id_distrik) : resolveDistrikId(cols[3] || cols[4], 1);
+                                kampungVal = cols[5] || (linkedKel ? linkedKel.kampung : null) || null;
+                                kategoriVal = cols[6] || 'BBM & Transportasi Air';
+                                deskripsi = cols[7] || '';
+                                urgensiVal = cols[8] || 'Sedang';
+                                statusVal = cols[9] || 'Terdata';
+                                if (cakupanVal === 'KELOMPOK' && !idKelVal) {
+                                    cakupanVal = 'DISTRIK';
+                                }
+                            } else {
+                                idDist = resolveDistrikId(cols[0] || cols[1], 1);
+                                kategoriVal = cols[2] || 'BBM & Transportasi Air';
+                                deskripsi = cols[3] || cols[2] || '';
+                                urgensiVal = cols[4] || 'Sedang';
+                                statusVal = cols[5] || 'Terdata';
+                            }
+
                             if (!deskripsi) continue;
                             const nextId = state.kendala.reduce(function (m, x) { return Math.max(m, Number(x.id_kendala) || 0); }, 0) + 1;
                             const payload = {
+                                cakupan_kendala: cakupanVal,
+                                id_kelompok: cakupanVal === 'KELOMPOK' ? idKelVal : null,
                                 id_distrik: idDist,
-                                kategori_kendala: cols[2] || 'BBM & Transportasi Air',
+                                kampung: kampungVal,
+                                kategori_kendala: kategoriVal,
                                 deskripsi: deskripsi,
-                                tingkat_urgensi: cols[4] || 'Sedang',
-                                status_tindak_lanjut: cols[5] || 'Terdata'
+                                tingkat_urgensi: urgensiVal,
+                                status_tindak_lanjut: statusVal
                             };
                             state.kendala.unshift(Object.assign({ id_kendala: nextId }, payload));
                             supabasePayloads.push(payload);
@@ -3719,6 +4010,8 @@ NOTIFY pgrst, 'reload schema';`;
             state = loadState();
             authSession = loadAuthSession();
             try { populateDistrictDropdowns(); } catch (e) {}
+            try { populateKelompokKendalaDropdown(); } catch (e) {}
+            try { onCakupanKendalaChange(false); } catch (e) {}
             try { applyLogoDisplay(); } catch (e) {}
             renderAllViews();
             if (isSupabaseReady()) {
