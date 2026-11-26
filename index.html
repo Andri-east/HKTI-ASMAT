@@ -124,7 +124,7 @@
     <!-- Header Utama -->
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-xs">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 py-3">
+            <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-2.5 py-2.5 sm:py-3">
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-center shrink-0 p-1 relative overflow-hidden">
                         <svg id="hkti-vector-logo" viewBox="0 0 180 155" class="w-full h-full" role="img" aria-label="Logo HKTI DPC Kabupaten Asmat">
@@ -151,15 +151,15 @@
                         </svg>
                         <img id="hkti-custom-logo" src="./logo-hkti.jpg" alt="Logo HKTI" class="hidden w-full h-full object-contain rounded-xl" onerror="window.handleCustomLogoError()" />
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-center gap-1.5">
                             <span class="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-hkti-pale text-hkti-dark">DPC ASMAT</span>
                             <span class="text-[11px] font-semibold text-slate-500">Kode Wilayah 91.18 • Papua Selatan</span>
                         </div>
-                        <h1 class="font-display text-base sm:text-xl font-extrabold text-slate-900 truncate">
+                        <h1 class="font-display text-base sm:text-lg lg:text-xl font-extrabold text-slate-900 leading-snug">
                             Sistem Manajemen Data HKTI DPC Kabupaten Asmat
                         </h1>
-                        <p class="text-xs text-slate-500 truncate">
+                        <p class="text-xs text-slate-500 leading-snug">
                             Jl. Zegward, samping RSUD Agats • HP/WA: 082349960907
                         </p>
                     </div>
@@ -177,8 +177,8 @@
                         </button>
                     </div>
 
-                    <div class="manager-only flex items-center gap-2">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold max-w-[230px]">
+                    <div class="manager-only flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold max-w-[240px]">
                             <i class="ph-fill ph-shield-check text-emerald-600 text-base shrink-0"></i>
                             <span id="header-manager-email" class="truncate">Mode Pengurus</span>
                         </span>
@@ -646,11 +646,11 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">No. HP / WA *</label>
-                                <input type="text" name="no_hp_wa" required placeholder="08xxxxxxxxxx" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                                <input type="text" name="no_hp_wa" required placeholder="08xxxxxxxxxx" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Email</label>
-                                <input type="email" name="email" placeholder="pengurus@hkti-asmat.id" class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                                <input type="email" name="email" placeholder="pengurus@hkti-asmat.id" class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -666,7 +666,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Jabatan *</label>
-                                <input type="text" name="jabatan" required placeholder="Ketua, Wakil Ketua, Sekretaris, Bendahara, Anggota..." class="touch-target w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
+                                <input type="text" name="jabatan" required placeholder="Ketua, Wakil Ketua, Sekretaris, Bendahara, Anggota..." class="touch-target w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-hkti-primary focus:outline-none" />
                             </div>
                             <div>
                                 <label class="block font-semibold text-slate-700 mb-1">Bidang</label>
