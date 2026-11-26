@@ -854,7 +854,7 @@
                     </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <input type="text" name="peran_anggota" value="Anggota" placeholder="Peran (Ketua/Sekretaris/Anggota)" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
+                    <input type="text" name="peran_anggota" value="Anggota" placeholder="Peran (Sekretaris/Bendahara/Anggota)" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
                     <input type="text" name="no_hp_wa" placeholder="No. HP / WA" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
                     <button type="submit" class="touch-target px-4 py-2 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer">
                         <i class="ph-bold ph-user-plus text-base"></i>
@@ -1427,6 +1427,24 @@ NOTIFY pgrst, 'reload schema';`;
             return String((a && a.nama_lengkap) || '').localeCompare(String((b && b.nama_lengkap) || ''), 'id', { sensitivity: 'base' });
         }
 
+        function getPeranAnggotaRank(peran) {
+            const p = String(peran || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (!p) return 3;
+            if (/\bwakil\s+sekretaris\b|\bwasek\b|\bsekretaris\b/.test(p)) return 1;
+            if (/\bwakil\s+bendahara\b|\bwabend\b|\bbendahara\b/.test(p)) return 2;
+            if (/\banggota\b/.test(p)) return 3;
+            if (/\bketua\b/.test(p)) return 4;
+            return 5;
+        }
+
+        function compareAnggotaKelompok(a, b) {
+            const rankDiff = getPeranAnggotaRank(a && a.peran_anggota) - getPeranAnggotaRank(b && b.peran_anggota);
+            if (rankDiff !== 0) return rankDiff;
+            const peranDiff = String((a && a.peran_anggota) || '').localeCompare(String((b && b.peran_anggota) || ''), 'id', { sensitivity: 'base' });
+            if (peranDiff !== 0) return peranDiff;
+            return String((a && a.nama_anggota) || '').localeCompare(String((b && b.nama_anggota) || ''), 'id', { sensitivity: 'base' });
+        }
+
         function loadState() {
             try {
                 const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -1497,7 +1515,7 @@ NOTIFY pgrst, 'reload schema';`;
             if (!listBox || !activeKelompokModalId) return;
 
             const kel = state.kelompok.find(function (k) { return Number(k.id_kelompok) === Number(activeKelompokModalId); });
-            const members = getAnggotaByKelompok(activeKelompokModalId);
+            const members = getAnggotaByKelompok(activeKelompokModalId).slice().sort(compareAnggotaKelompok);
 
             if (members.length === 0) {
                 const declaredTotal = kel ? Number(kel.jumlah_anggota || 0) : 0;
@@ -1510,8 +1528,10 @@ NOTIFY pgrst, 'reload schema';`;
             }
 
             listBox.innerHTML =
-                '<div class="text-xs font-bold text-slate-500 mb-1">Total anggota terdaftar: <strong class="text-slate-900">' + members.length + ' orang</strong></div>' +
+                '<div class="text-xs font-bold text-slate-500 mb-1">Total anggota terdaftar: <strong class="text-slate-900">' + members.length + ' orang</strong> (Sekretaris → Bendahara → Anggota, abjad A–Z)</div>' +
                 members.map(function (m, idx) {
+                    const waRaw = String(m.no_hp_wa || '').trim();
+                    const waDisplay = waRaw && waRaw !== '0' ? waRaw : '';
                     return (
                         '<div class="p-3 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-center justify-between gap-2">' +
                             '<div class="min-w-0">' +
@@ -1521,7 +1541,7 @@ NOTIFY pgrst, 'reload schema';`;
                                 '</div>' +
                                 '<div class="text-xs text-slate-600">' +
                                     '<span class="font-semibold text-hkti-dark">' + escapeHtml(m.peran_anggota || 'Anggota') + '</span>' +
-                                    (m.no_hp_wa ? ' • WA: ' + escapeHtml(m.no_hp_wa) : '') +
+                                    (waDisplay ? ' • WA: ' + escapeHtml(waDisplay) : '') +
                                 '</div>' +
                             '</div>' +
                             '<button type="button" onclick="handleDeleteAnggotaKelompok(' + m.id_anggota + ')" class="manager-only touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold inline-flex items-center gap-1 shrink-0 cursor-pointer">' +
