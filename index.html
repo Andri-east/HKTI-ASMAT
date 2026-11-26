@@ -401,7 +401,7 @@
                 <div id="kelompok-list-wrapper" class="lg:col-span-12 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-6 space-y-4">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Basis Data Lapangan</span>
+                            <span class="text-xs font-bold uppercase tracking-wider text-hkti-primary">Basis Data Lapangan • Klik Kelompok untuk Daftar Anggota</span>
                             <h2 class="font-display text-lg font-bold text-slate-900">Daftar Kelompok &amp; Komoditas</h2>
                         </div>
                         <div class="flex flex-wrap gap-2">
@@ -830,6 +830,47 @@
         </div>
     </footer>
 
+    <!-- Modal Daftar Anggota Kelompok -->
+    <div id="modal-anggota-kelompok" class="modal-overlay" onclick="handleModalBackdrop(event, 'modal-anggota-kelompok')">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto thin-scroll">
+            <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+                <div>
+                    <span id="modal-anggota-badge" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-hkti-pale text-hkti-dark mb-1">Kelompok Usaha</span>
+                    <h3 id="modal-anggota-title" class="font-display text-lg sm:text-xl font-extrabold text-slate-900">Daftar Anggota Kelompok</h3>
+                    <p id="modal-anggota-subtitle" class="text-xs text-slate-500 mt-0.5"></p>
+                </div>
+                <button type="button" onclick="closeModal('modal-anggota-kelompok')" class="touch-target w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 cursor-pointer">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <form id="form-tambah-anggota" onsubmit="handleAddAnggotaKelompok(event)" class="manager-only p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3 text-sm">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-hkti-dark">Tambah Anggota Baru</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <input type="text" name="nama_anggota" required placeholder="Nama lengkap anggota *" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
+                    <select name="jenis_kelamin" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none">
+                        <option value="L">Laki-laki (L)</option>
+                        <option value="P">Perempuan (P)</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <input type="text" name="peran_anggota" value="Anggota" placeholder="Peran (Ketua/Sekretaris/Anggota)" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
+                    <input type="text" name="no_hp_wa" placeholder="No. HP / WA" class="touch-target w-full px-3 py-2 rounded-xl border border-slate-300 bg-white focus:border-hkti-primary focus:outline-none" />
+                    <button type="submit" class="touch-target px-4 py-2 rounded-xl bg-hkti-primary hover:bg-hkti-dark text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="ph-bold ph-user-plus text-base"></i>
+                        <span>Tambah Anggota</span>
+                    </button>
+                </div>
+            </form>
+
+            <div id="modal-anggota-list" class="space-y-2"></div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeModal('modal-anggota-kelompok')" class="touch-target px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold cursor-pointer">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Login Pengurus -->
     <div id="modal-login" class="modal-overlay" onclick="handleModalBackdrop(event, 'modal-login')">
         <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-7 shadow-2xl border border-slate-200 space-y-5">
@@ -940,10 +981,11 @@
     <script>
         const DEFAULT_PROJECT_URL = 'https://yxuasktivchtbbugdpos.supabase.co';
         const DEFAULT_ANON_KEY = 'sb_publishable_I4owPs2tzgrJFWtpVMMFgg_IazGOuU5';
-        const STORAGE_KEY = 'hkti_dpc_asmat_data_v3';
+        const STORAGE_KEY = 'hkti_dpc_asmat_data_v4';
         const AUTH_STORAGE_KEY = 'hkti_dpc_asmat_auth_v1';
 
         const ALLOWED_JENIS_KELOMPOK = ['Pertanian', 'Perikanan', 'Peternakan', 'Perkebunan', 'Kehutanan'];
+        let activeKelompokModalId = null;
 
         function normalizeJenisKelompok(rawJenis, komoditasText) {
             const direct = String(rawJenis || '').trim();
@@ -1090,7 +1132,6 @@
 
         const SQL_SCHEMA_AND_RLS = `-- ============================================================================
 -- SKRIP SQL SISTEM MANAJEMEN DATA HKTI DPC KABUPATEN ASMAT
--- Mencakup: Skema Tabel, Penyesuaian Check Constraint, 25 Distrik & RLS
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS distrik (
@@ -1116,15 +1157,16 @@ CREATE TABLE IF NOT EXISTS kelompok_usaha (
     komoditas_utama VARCHAR(120)
 );
 
-ALTER TABLE public.kelompok_usaha ADD COLUMN IF NOT EXISTS komoditas_utama VARCHAR(120);
-ALTER TABLE public.kelompok_usaha ADD COLUMN IF NOT EXISTS jenis_kelompok VARCHAR(120) DEFAULT 'Pertanian';
-ALTER TABLE public.kelompok_usaha ADD COLUMN IF NOT EXISTS nama_ketua VARCHAR(150);
-ALTER TABLE public.kelompok_usaha ADD COLUMN IF NOT EXISTS status_pendampingan VARCHAR(30) DEFAULT 'Terdata';
-
--- Perbarui check constraint jenis_kelompok agar mendukung kategori baku HKTI
-ALTER TABLE public.kelompok_usaha DROP CONSTRAINT IF EXISTS kelompok_usaha_jenis_kelompok_check;
-ALTER TABLE public.kelompok_usaha ADD CONSTRAINT kelompok_usaha_jenis_kelompok_check
-    CHECK (jenis_kelompok IN ('Pertanian', 'Perikanan', 'Peternakan', 'Perkebunan', 'Kehutanan'));
+CREATE TABLE IF NOT EXISTS anggota_kelompok (
+    id_anggota SERIAL PRIMARY KEY,
+    id_kelompok INT NOT NULL REFERENCES kelompok_usaha(id_kelompok) ON DELETE CASCADE,
+    nama_anggota VARCHAR(150) NOT NULL,
+    jenis_kelamin VARCHAR(5) NOT NULL DEFAULT 'L' CHECK (jenis_kelamin IN ('L', 'P')),
+    peran_anggota VARCHAR(80) NOT NULL DEFAULT 'Anggota',
+    no_hp_wa VARCHAR(30),
+    keterangan TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 CREATE TABLE IF NOT EXISTS kendala_infrastruktur (
     id_kendala SERIAL PRIMARY KEY,
@@ -1162,12 +1204,6 @@ CREATE TABLE IF NOT EXISTS berita_kegiatan (
     dibuat_pada TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     url_berita TEXT
 );
-
-ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS url_dokumentasi TEXT;
-ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS url_berita TEXT;
-ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS tanggal_kegiatan DATE DEFAULT CURRENT_DATE;
-ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS isi_berita TEXT;
-ALTER TABLE public.berita_kegiatan ADD COLUMN IF NOT EXISTS status_publikasi VARCHAR(40) DEFAULT 'Terbit';
 
 CREATE TABLE IF NOT EXISTS pengurus (
     id_pengurus SERIAL PRIMARY KEY,
@@ -1262,7 +1298,7 @@ NOTIFY pgrst, 'reload schema';`;
                         id_distrik: 17,
                         kampung: 'Yaosakor',
                         komoditas_utama: 'Sagu Basah & Tepung Sagu',
-                        jumlah_anggota: 24,
+                        jumlah_anggota: 3,
                         nama_ketua: 'Yosef B.',
                         ketua_kelompok: 'Yosef B.',
                         no_hp_wa: '082349960907',
@@ -1276,7 +1312,7 @@ NOTIFY pgrst, 'reload schema';`;
                         id_distrik: 2,
                         kampung: 'Atsj',
                         komoditas_utama: 'Kepiting Bakau & Udang Muara',
-                        jumlah_anggota: 18,
+                        jumlah_anggota: 2,
                         nama_ketua: 'Markus K.',
                         ketua_kelompok: 'Markus K.',
                         no_hp_wa: '082349960907',
@@ -1290,13 +1326,22 @@ NOTIFY pgrst, 'reload schema';`;
                         id_distrik: 1,
                         kampung: 'Bis Agats',
                         komoditas_utama: 'Sayuran Pekarangan & P2L',
-                        jumlah_anggota: 16,
+                        jumlah_anggota: 2,
                         nama_ketua: 'Maria W.',
                         ketua_kelompok: 'Maria W.',
                         no_hp_wa: '082349960907',
                         status_pendampingan: 'Dalam Pembinaan',
                         status_aktif: 'Dalam Pembinaan'
                     }
+                ],
+                anggota: [
+                    { id_anggota: 1, id_kelompok: 1, nama_anggota: 'Yosef B.', jenis_kelamin: 'L', peran_anggota: 'Ketua', no_hp_wa: '082349960907' },
+                    { id_anggota: 2, id_kelompok: 1, nama_anggota: 'Petrus M.', jenis_kelamin: 'L', peran_anggota: 'Sekretaris', no_hp_wa: '' },
+                    { id_anggota: 3, id_kelompok: 1, nama_anggota: 'Regina A.', jenis_kelamin: 'P', peran_anggota: 'Bendahara', no_hp_wa: '' },
+                    { id_anggota: 4, id_kelompok: 2, nama_anggota: 'Markus K.', jenis_kelamin: 'L', peran_anggota: 'Ketua', no_hp_wa: '082349960907' },
+                    { id_anggota: 5, id_kelompok: 2, nama_anggota: 'Antonius S.', jenis_kelamin: 'L', peran_anggota: 'Anggota', no_hp_wa: '' },
+                    { id_anggota: 6, id_kelompok: 3, nama_anggota: 'Maria W.', jenis_kelamin: 'P', peran_anggota: 'Ketua', no_hp_wa: '082349960907' },
+                    { id_anggota: 7, id_kelompok: 3, nama_anggota: 'Yohana F.', jenis_kelamin: 'P', peran_anggota: 'Anggota', no_hp_wa: '' }
                 ],
                 kendala: [
                     {
@@ -1395,6 +1440,7 @@ NOTIFY pgrst, 'reload schema';`;
                     },
                     customLogoDataUrl: parsed && typeof parsed.customLogoDataUrl === 'string' ? parsed.customLogoDataUrl : '',
                     kelompok: parsed && Array.isArray(parsed.kelompok) ? parsed.kelompok : def.kelompok,
+                    anggota: parsed && Array.isArray(parsed.anggota) ? parsed.anggota : def.anggota,
                     kendala: parsed && Array.isArray(parsed.kendala) ? parsed.kendala : def.kendala,
                     program: parsed && Array.isArray(parsed.program) ? parsed.program : def.program,
                     berita: parsed && Array.isArray(parsed.berita) ? parsed.berita : def.berita,
@@ -1411,6 +1457,161 @@ NOTIFY pgrst, 'reload schema';`;
             } catch (e) {
                 showToast('Penyimpanan lokal browser penuh.', true);
             }
+        }
+
+        function getAnggotaByKelompok(idKelompok) {
+            return (state.anggota || []).filter(function (a) {
+                return Number(a.id_kelompok) === Number(idKelompok);
+            });
+        }
+
+        function getDisplayAnggotaCount(kelompokItem) {
+            const list = getAnggotaByKelompok(kelompokItem.id_kelompok);
+            if (list.length > 0) return list.length;
+            return Number(kelompokItem.jumlah_anggota || 0);
+        }
+
+        function openAnggotaKelompokModal(idKelompok) {
+            const kel = state.kelompok.find(function (k) { return Number(k.id_kelompok) === Number(idKelompok); });
+            if (!kel) return;
+            activeKelompokModalId = Number(idKelompok);
+
+            const d = getDistrikById(kel.id_distrik);
+            const badgeEl = document.getElementById('modal-anggota-badge');
+            const titleEl = document.getElementById('modal-anggota-title');
+            const subEl = document.getElementById('modal-anggota-subtitle');
+
+            if (badgeEl) badgeEl.textContent = d.kode + ' ' + d.nama + (kel.kampung ? ' • ' + kel.kampung : '');
+            if (titleEl) titleEl.textContent = kel.nama_kelompok;
+            if (subEl) subEl.textContent = 'Komoditas: ' + (kel.komoditas_utama || '-') + ' • Ketua: ' + (kel.nama_ketua || kel.ketua_kelompok || '-');
+
+            const addForm = document.getElementById('form-tambah-anggota');
+            if (addForm) addForm.reset();
+
+            renderAnggotaModalList();
+            openModal('modal-anggota-kelompok');
+        }
+
+        function renderAnggotaModalList() {
+            const listBox = document.getElementById('modal-anggota-list');
+            if (!listBox || !activeKelompokModalId) return;
+
+            const kel = state.kelompok.find(function (k) { return Number(k.id_kelompok) === Number(activeKelompokModalId); });
+            const members = getAnggotaByKelompok(activeKelompokModalId);
+
+            if (members.length === 0) {
+                const declaredTotal = kel ? Number(kel.jumlah_anggota || 0) : 0;
+                listBox.innerHTML =
+                    '<div class="p-5 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-300 space-y-1">' +
+                        '<div class="text-sm font-semibold text-slate-700">Belum ada rincian nama anggota tercatat.</div>' +
+                        (declaredTotal > 0 ? '<div class="text-xs text-slate-500">Jumlah anggota terdata pada kelompok: <strong>' + declaredTotal + ' orang</strong>.</div>' : '') +
+                    '</div>';
+                return;
+            }
+
+            listBox.innerHTML =
+                '<div class="text-xs font-bold text-slate-500 mb-1">Total anggota terdaftar: <strong class="text-slate-900">' + members.length + ' orang</strong></div>' +
+                members.map(function (m, idx) {
+                    return (
+                        '<div class="p-3 rounded-2xl border border-slate-200 bg-slate-50/70 flex items-center justify-between gap-2">' +
+                            '<div class="min-w-0">' +
+                                '<div class="font-display font-bold text-sm text-slate-900">' +
+                                    (idx + 1) + '. ' + escapeHtml(m.nama_anggota) +
+                                    ' <span class="text-xs font-normal text-slate-500">(' + escapeHtml(m.jenis_kelamin || 'L') + ')</span>' +
+                                '</div>' +
+                                '<div class="text-xs text-slate-600">' +
+                                    '<span class="font-semibold text-hkti-dark">' + escapeHtml(m.peran_anggota || 'Anggota') + '</span>' +
+                                    (m.no_hp_wa ? ' • WA: ' + escapeHtml(m.no_hp_wa) : '') +
+                                '</div>' +
+                            '</div>' +
+                            '<button type="button" onclick="handleDeleteAnggotaKelompok(' + m.id_anggota + ')" class="manager-only touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold inline-flex items-center gap-1 shrink-0 cursor-pointer">' +
+                                '<i class="ph-bold ph-trash"></i><span>Hapus</span>' +
+                            '</button>' +
+                        '</div>'
+                    );
+                }).join('');
+        }
+
+        async function handleAddAnggotaKelompok(e) {
+            e.preventDefault();
+            if (!requireManagerAccess() || !activeKelompokModalId) return;
+
+            const fd = new FormData(e.target);
+            const namaAnggota = String(fd.get('nama_anggota') || '').trim();
+            if (!namaAnggota) return;
+
+            const payload = {
+                id_kelompok: Number(activeKelompokModalId),
+                nama_anggota: namaAnggota,
+                jenis_kelamin: String(fd.get('jenis_kelamin') || 'L') === 'P' ? 'P' : 'L',
+                peran_anggota: String(fd.get('peran_anggota') || 'Anggota').trim() || 'Anggota',
+                no_hp_wa: String(fd.get('no_hp_wa') || '').trim() || null
+            };
+
+            const nextId = (state.anggota || []).reduce(function (m, x) { return Math.max(m, Number(x.id_anggota) || 0); }, 0) + 1;
+            const newItem = Object.assign({ id_anggota: nextId }, payload);
+
+            if (isSupabaseReady()) {
+                const created = await restRequest('anggota_kelompok', { method: 'POST', body: payload });
+                if (created.ok && Array.isArray(created.data) && created.data[0]) {
+                    newItem.id_anggota = Number(created.data[0].id_anggota || nextId);
+                }
+            }
+
+            if (!Array.isArray(state.anggota)) state.anggota = [];
+            state.anggota.push(newItem);
+
+            const totalNow = getAnggotaByKelompok(activeKelompokModalId).length;
+            state.kelompok = state.kelompok.map(function (k) {
+                return Number(k.id_kelompok) === Number(activeKelompokModalId)
+                    ? Object.assign({}, k, { jumlah_anggota: totalNow })
+                    : k;
+            });
+
+            if (isSupabaseReady()) {
+                await restRequest('kelompok_usaha', {
+                    method: 'PATCH',
+                    query: 'id_kelompok=eq.' + Number(activeKelompokModalId),
+                    body: { jumlah_anggota: totalNow }
+                });
+            }
+
+            saveState();
+            e.target.reset();
+            renderAnggotaModalList();
+            renderKelompokList();
+            renderDistrikGrid();
+            showToast('Anggota ditambahkan.');
+        }
+
+        async function handleDeleteAnggotaKelompok(idAnggota) {
+            if (!requireManagerAccess() || !activeKelompokModalId) return;
+            const targetId = Number(idAnggota);
+
+            if (isSupabaseReady()) {
+                const delRes = await restRequest('anggota_kelompok', {
+                    method: 'DELETE',
+                    query: 'id_anggota=eq.' + targetId
+                });
+                if (!delRes.ok) {
+                    showToast('Gagal hapus anggota di Supabase: ' + (delRes.error || 'Cek izin'), true);
+                    return;
+                }
+            }
+
+            state.anggota = (state.anggota || []).filter(function (a) { return Number(a.id_anggota) !== targetId; });
+            const totalNow = getAnggotaByKelompok(activeKelompokModalId).length;
+            state.kelompok = state.kelompok.map(function (k) {
+                return Number(k.id_kelompok) === Number(activeKelompokModalId)
+                    ? Object.assign({}, k, { jumlah_anggota: totalNow })
+                    : k;
+            });
+
+            saveState();
+            renderAnggotaModalList();
+            renderKelompokList();
+            renderDistrikGrid();
+            showToast('Anggota dihapus.');
         }
 
         function loadAuthSession() {
@@ -1719,6 +1920,7 @@ NOTIFY pgrst, 'reload schema';`;
             const results = await Promise.all([
                 restRequest('distrik', { query: 'select=*&order=id_distrik.asc' }),
                 restRequest('kelompok_usaha', { query: 'select=*&order=id_kelompok.desc' }),
+                restRequest('anggota_kelompok', { query: 'select=*&order=id_anggota.asc' }),
                 restRequest('kendala_infrastruktur', { query: 'select=*&order=id_kendala.desc' }),
                 restRequest('program_bantuan', { query: 'select=*&order=id_program.desc' }),
                 restRequest('berita_kegiatan', { query: 'select=*&order=id_berita.desc' }),
@@ -1727,16 +1929,18 @@ NOTIFY pgrst, 'reload schema';`;
 
             const rDistrik = results[0];
             const rKelompok = results[1];
-            const rKendala = results[2];
-            const rProgram = results[3];
-            const rBerita = results[4];
-            const rPengurus = results[5];
+            const rAnggota = results[2];
+            const rKendala = results[3];
+            const rProgram = results[4];
+            const rBerita = results[5];
+            const rPengurus = results[6];
 
             syncInfo.busy = false;
 
             const checks = [
                 ['distrik', rDistrik],
                 ['kelompok_usaha', rKelompok],
+                ['anggota_kelompok', rAnggota],
                 ['kendala_infrastruktur', rKendala],
                 ['program_bantuan', rProgram],
                 ['berita_kegiatan', rBerita],
@@ -1828,6 +2032,19 @@ NOTIFY pgrst, 'reload schema';`;
                         no_hp_wa: k.no_hp_wa || k.no_hp_ketua || (prev && prev.no_hp_wa) || '',
                         status_pendampingan: statusVal,
                         status_aktif: statusVal
+                    };
+                });
+            }
+
+            if (rAnggota.ok && Array.isArray(rAnggota.data)) {
+                state.anggota = rAnggota.data.map(function (a) {
+                    return {
+                        id_anggota: Number(a.id_anggota),
+                        id_kelompok: Number(a.id_kelompok),
+                        nama_anggota: a.nama_anggota,
+                        jenis_kelamin: a.jenis_kelamin || 'L',
+                        peran_anggota: a.peran_anggota || 'Anggota',
+                        no_hp_wa: a.no_hp_wa || ''
                     };
                 });
             }
@@ -2154,7 +2371,7 @@ NOTIFY pgrst, 'reload schema';`;
         function renderDistrikGrid() {
             const kpi = document.getElementById('kpi-cards');
             if (kpi) {
-                const totalAnggota = state.kelompok.reduce(function (acc, k) { return acc + (Number(k.jumlah_anggota) || 0); }, 0);
+                const totalAnggota = state.kelompok.reduce(function (acc, k) { return acc + getDisplayAnggotaCount(k); }, 0);
                 const cards = [
                     { title: 'Wilayah Distrik', val: String(DISTRIK_25.length), sub: 'Kode 91.18.01 – 91.18.25', icon: 'ph-map-pin-line', tone: 'bg-emerald-100 text-emerald-800' },
                     { title: 'Kelompok Usaha', val: state.kelompok.length, sub: totalAnggota + ' anggota terdata', icon: 'ph-users-three', tone: 'bg-hkti-pale text-hkti-dark' },
@@ -2246,8 +2463,9 @@ NOTIFY pgrst, 'reload schema';`;
                 const komoditasNama = k.komoditas_utama || '-';
                 const jenisNama = normalizeJenisKelompok(k.jenis_kelompok, komoditasNama);
                 const statusNama = k.status_pendampingan || k.status_aktif || 'Terdata';
+                const totalAnggota = getDisplayAnggotaCount(k);
                 return (
-                    '<div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2.5">' +
+                    '<div onclick="openAnggotaKelompokModal(' + k.id_kelompok + ')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openAnggotaKelompokModal(' + k.id_kelompok + ');}" class="p-4 rounded-2xl border border-slate-200 hover:border-hkti-primary bg-slate-50/50 hover:bg-emerald-50/30 transition space-y-2.5 cursor-pointer">' +
                         '<div class="flex flex-wrap items-start justify-between gap-2">' +
                             '<div>' +
                                 '<div class="flex flex-wrap items-center gap-1.5">' +
@@ -2257,14 +2475,14 @@ NOTIFY pgrst, 'reload schema';`;
                                 '</div>' +
                                 '<h3 class="font-display font-bold text-base text-slate-900 mt-1">' + escapeHtml(k.nama_kelompok) + '</h3>' +
                             '</div>' +
-                            '<div class="manager-only flex items-center gap-1.5">' +
+                            '<div onclick="event.stopPropagation()" class="manager-only flex items-center gap-1.5">' +
                                 '<button type="button" onclick="startEditKelompok(' + k.id_kelompok + ')" class="touch-target px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-pencil-simple"></i><span>Edit</span></button>' +
                                 '<button type="button" onclick="deleteItem(\'kelompok\', ' + k.id_kelompok + ')" class="touch-target px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold inline-flex items-center gap-1 cursor-pointer"><i class="ph-bold ph-trash"></i><span>Hapus</span></button>' +
                             '</div>' +
                         '</div>' +
                         '<div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200/80">' +
                             '<div>Komoditas: <strong class="text-hkti-dark">' + escapeHtml(komoditasNama) + '</strong></div>' +
-                            '<div>Ketua: <strong class="text-slate-900">' + escapeHtml(ketuaNama) + '</strong> (' + escapeHtml(k.jumlah_anggota) + ' anggota)</div>' +
+                            '<div>Ketua: <strong class="text-slate-900">' + escapeHtml(ketuaNama) + '</strong> • <span class="underline font-bold text-hkti-primary">' + escapeHtml(totalAnggota) + ' anggota (lihat daftar)</span></div>' +
                             '<div>HP/WA: <strong class="text-slate-900">' + escapeHtml(k.no_hp_wa || '-') + '</strong></div>' +
                         '</div>' +
                     '</div>'
@@ -2643,6 +2861,17 @@ NOTIFY pgrst, 'reload schema';`;
                         item.id_kelompok = Number(created.data[0].id_kelompok || nextId);
                         syncInfo.mode = 'connected';
                     }
+                }
+                if (namaKetua) {
+                    const nextAnggotaId = (state.anggota || []).reduce(function (m, x) { return Math.max(m, Number(x.id_anggota) || 0); }, 0) + 1;
+                    state.anggota.push({
+                        id_anggota: nextAnggotaId,
+                        id_kelompok: item.id_kelompok,
+                        nama_anggota: namaKetua,
+                        jenis_kelamin: 'L',
+                        peran_anggota: 'Ketua',
+                        no_hp_wa: noHpWa
+                    });
                 }
                 state.kelompok.unshift(item);
                 showToast('Kelompok usaha baru tersimpan.');
@@ -3036,6 +3265,9 @@ NOTIFY pgrst, 'reload schema';`;
             }
 
             state[collection] = state[collection].filter(function (row) { return Number(row[pkMap[collection]]) !== targetId; });
+            if (collection === 'kelompok') {
+                state.anggota = (state.anggota || []).filter(function (a) { return Number(a.id_kelompok) !== targetId; });
+            }
             saveState();
             renderAllViews();
             showToast('Data dihapus.');
@@ -3127,7 +3359,7 @@ NOTIFY pgrst, 'reload schema';`;
                     d.nama,
                     k.kampung,
                     komoditasVal,
-                    k.jumlah_anggota,
+                    getDisplayAnggotaCount(k),
                     k.nama_ketua || k.ketua_kelompok || '',
                     k.status_pendampingan || k.status_aktif || 'Terdata'
                 ]);
